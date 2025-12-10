@@ -1,7 +1,9 @@
 import pandas as pd 
 import numpy as np
-df= pd.read_csv("milp_analysis_results.csv")
+df= pd.read_csv("test_set/milp_analysis_results.csv")
 numeric_df = df.select_dtypes(include=np.number)
+numeric_df['only integer']= numeric_df['Integer Variables']-  numeric_df['Binary Variables']
+
 # Calculate the mean of each numeric column
 mean_values = numeric_df.mean().rename('Mean')
 

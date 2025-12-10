@@ -5,8 +5,10 @@ import pandas as pd
 import glob
 
 # --- Configuration (Keep these the same) ---
-INSTANCES_DIR = os.path.join(os.getcwd(), 'instances')
-OUTPUT_FILE = 'milp_analysis_results.csv'
+# --- Configuration (UPDATED) ---
+INSTANCES_DIR = os.path.join(os.getcwd(), 'test_set', 'instances')
+OUTPUT_FILE = os.path.join(os.getcwd(), 'test_set', 'milp_analysis_results.csv')
+
 
 # --- Analysis Function (CORRECTED) ---
 
