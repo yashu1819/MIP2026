@@ -4,7 +4,6 @@
 #include <cuda_runtime.h>
 #include <cfloat>
 #include <cuda/atomic> // Required for CCCL atomic_ref
-
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 
