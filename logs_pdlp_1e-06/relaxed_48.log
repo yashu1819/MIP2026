@@ -1,0 +1,39 @@
+Setting parameter method to 1
+Setting parameter absolute_primal_tolerance to 1.000000e-06
+Setting parameter time_limit to 1.800000e+02
+Setting parameter save_best_primal_so_far to true
+cuOpt version: 25.12.0, git hash: d97ff6b, host arch: x86_64, device archs: 70-real,75-real,80-real,86-real,90a-real,100f-real,120a-real,120
+CPU: 13th Gen Intel(R) Core(TM) i9-13900K, threads (physical/logical): 24/32, RAM: 54.46 GiB
+CUDA 12.9, device: NVIDIA GeForce RTX 4090 (ID 0), VRAM: 23.51 GiB
+CUDA device UUID: ffffffac5e1cffffffb4-ffffffe33a-6134
+
+Solving a problem with 502074 constraints, 828002 variables (0 integers), and 2391926 nonzeros
+Problem scaling:
+Objective coefficents range:          [5e-13, 3e+06]
+Constraint matrix coefficients range: [1e+00, 7e+03]
+Constraint rhs / bounds range:        [1e+00, 4e+03]
+Variable bounds range:                [1e+00, 5e+00]
+Warning: input problem contains a large range of coefficients: consider reformulating to avoid numerical difficulties.
+
+Third-party presolve is disabled, skipping
+Objective offset 100215917.117686 scaling_factor 1.000000
+   Iter    Primal Obj.      Dual Obj.    Gap        Primal Res.  Dual Res.   Time
+      0 +1.00215917e+08 +1.00215917e+08  0.00e+00   5.07e+03     4.63e+07   0.763s
+   1000 +1.51428242e+08 +1.53033087e+08  1.60e+06   5.62e-01     7.74e+05   1.022s
+   2000 +1.51707962e+08 +1.52646820e+08  9.39e+05   2.89e-01     2.43e+05   1.189s
+   3000 +1.52269973e+08 +1.52478644e+08  2.09e+05   7.59e-02     1.74e+05   1.355s
+   4000 +1.52241971e+08 +1.52382008e+08  1.40e+05   8.21e-02     1.61e+05   1.522s
+   5000 +1.52178838e+08 +1.52348096e+08  1.69e+05   7.92e-02     1.45e+05   1.688s
+   6000 +1.52166078e+08 +1.52266619e+08  1.01e+05   6.40e-01     9.57e+04   1.855s
+   7000 +1.52139347e+08 +1.52187659e+08  4.83e+04   6.44e-02     6.67e+04   2.021s
+   8000 +1.52146093e+08 +1.52136363e+08  9.73e+03   2.74e-01     1.18e+04   2.187s
+   8300 +1.52133414e+08 +1.52132594e+08  8.19e+02   1.28e-01     4.29e+03   2.237s
+LP Solver status:                Optimal
+Primal objective:                +1.52133414e+08
+Dual objective:                  +1.52132594e+08
+Duality gap (abs/rel):           +8.19e+02 / +2.69e-06
+Primal infeasibility (abs/rel):  +1.28e-01 / +1.62e-05
+Dual infeasibility (abs/rel):    +4.29e+03 / +9.27e-05
+PDLP finished
+Status: Optimal   Objective: 1.52133414e+08  Iterations: 8300  Time: 2.238s, Total time 2.257s
+Solve completed (status 1). Objective = 152133413.911231. Solution written to results_pdlp_1e-06/relaxed_48_sol.txt
