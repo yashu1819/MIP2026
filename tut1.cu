@@ -188,9 +188,9 @@ int main() {
    };
 
    // --- Convert to CSC ---
-   std::vector h_col_ptr = {0};
-   std::vector h_row_ind;
-   std::vector h_val;
+   std::vector<int> h_col_ptr = {0};
+   std::vector<int> h_row_ind;
+   std::vector<float> h_val;
 
    for (int col = 0; col < N; ++col) {
        for (int row = 0; row < M; ++row) {
@@ -203,26 +203,33 @@ int main() {
        h_col_ptr.push_back(h_row_ind.size());
    }
 
-   std::vector h_lb(N, 0.0f);
-   std::vector h_ub(N, 1.0f);
-   std::vector h_x = {0.0f, 0.0f, 0.0f};
+   std::vector<float> h_lb(N, 0.0f);
+   std::vector<float> h_ub(N, 1.0f);
+   std::vector<float> h_x = {0.0f, 0.0f, 0.0f};
    
-   std::vector h_activity(M, 0.0f);
-   for(int k=0; k d_A_col_ptr = h_col_ptr;
-   thrust::device_vector d_A_row_ind = h_row_ind;
-   thrust::device_vector d_A_val = h_val;
-   thrust::device_vector d_A_dense = h_A_dense;
-   
-   thrust::device_vector d_b = h_b;
-   thrust::device_vector d_c = h_c;
-   thrust::device_vector d_x = h_x;
-   thrust::device_vector d_lb = h_lb;
-   thrust::device_vector d_ub = h_ub;
-   thrust::device_vector d_activity = h_activity;
+   std::vector<float> h_activity(M, 0.0f);
+  
+   for(int k = 0; k < M; ++k){
+    for(int j = 0; j < N; ++j){
+        h_activity[k] += h_A_dense[k * N + j] * h_x[j];
+    }
+}
+   thrust::device_vector<int>   d_A_col_ptr = h_col_ptr;
+thrust::device_vector<int>   d_A_row_ind = h_row_ind;
+thrust::device_vector<float> d_A_val     = h_val;
+thrust::device_vector<float> d_A_dense   = h_A_dense;
+
+thrust::device_vector<float> d_b  = h_b;
+thrust::device_vector<float> d_c  = h_c;
+thrust::device_vector<float> d_x  = h_x;
+thrust::device_vector<float> d_lb = h_lb;
+thrust::device_vector<float> d_ub = h_ub;
+thrust::device_vector<float> d_activity = h_activity;
 
    // Initialize result on device
    MoveResult initial_res = {0, 0.0f, -1, -1, 0, 0};
-   thrust::device_vector d_result(1, initial_res);
+   thrust::device_vector<MoveResult> d_result(1, initial_res);
+
 
    // --- Launch Kernel ---
    dim3 grid(N, N);
@@ -231,7 +238,7 @@ int main() {
    std::cout << "Launching Hybrid Kernel using Thrust..." << std::endl;
    
    // Use raw_pointer_cast to extract pointers for the kernel
-   find_2opt_move_kernel_hybrid<<>>(
+   find_2opt_move_kernel_hybrid<<<grid, threadsPerBlock>>>(
        thrust::raw_pointer_cast(d_A_col_ptr.data()),
        thrust::raw_pointer_cast(d_A_row_ind.data()),
        thrust::raw_pointer_cast(d_A_val.data()),
