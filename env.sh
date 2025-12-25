@@ -16,7 +16,7 @@ sudo apt update
 sudo apt install -y cuda-toolkit
 sudo apt install -y nvidia-gds
 # 4) Install gcc-12 and g++-12
-sudo apt install -y gcc g++ build-essential
+sudo apt install -y gcc-12 g++-12 build-essential
 
 # 5) Clean old PATH lines in bashrc (basic delete)
 sed -i '/cuda/d' ~/.bashrc
