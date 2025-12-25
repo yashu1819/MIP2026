@@ -25,8 +25,8 @@ sed -i '/CC=/d' ~/.bashrc
 sed -i '/CXX=/d' ~/.bashrc
 
 # 6) Add CUDA 12.2 environment
-echo 'export PATH=${PATH}:/usr/local/cuda-13.0/bin' >> ~/.bashrc
-echo 'export LD_LIBRARY_PATH=/usr/local/cuda-13.0/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
+echo 'export PATH=${PATH}:/usr/local/cuda-13.1/bin' >> ~/.bashrc
+echo 'export LD_LIBRARY_PATH=/usr/local/cuda-13.1/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
 echo 'export CC=/usr/bin/gcc-12' >> ~/.bashrc
 echo 'export CXX=/usr/bin/g++-12' >> ~/.bashrc
 
