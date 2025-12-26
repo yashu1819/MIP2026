@@ -1,31 +1,4 @@
 Reading and solving MPS file: ../test_set/relaxedInstances/relaxed_04.mps
-Setting parameter method to 1
-Setting parameter absolute_primal_tolerance to 1.000000e-06
-cuOpt version: 25.12.0, git hash: d97ff6b, host arch: x86_64, device archs: 75-real,80-real,86-real,90a-real,100f-real,120a-real,120
-CPU: Intel(R) Xeon(R) CPU @ 2.30GHz, threads (physical/logical): 1/1, RAM: 0.50 GiB
-CUDA 13.0, device: Tesla T4 (ID 0), VRAM: 14.56 GiB
-CUDA device UUID: 0e0bffffffdd6b-24ffffffdc-ffffffb0ff
+Error creating problem from MPS file: 3
 
-Solving a problem with 11818 constraints, 19061 variables (0 integers), and 325135 nonzeros
-Problem scaling:
-Objective coefficents range:          [1e+00, 1e+00]
-Constraint matrix coefficients range: [1e-01, 9e+02]
-Constraint rhs / bounds range:        [1e+00, 3e+01]
-Variable bounds range:                [1e+00, 4e+04]
-
-Third-party presolve is disabled, skipping
-Objective offset 0.000000 scaling_factor 1.000000
-   Iter    Primal Obj.      Dual Obj.    Gap        Primal Res.  Dual Res.   Time
-      0 +0.00000000e+00 +0.00000000e+00  0.00e+00   4.15e+01     1.00e+00   0.133s
-   1000 +4.49224903e+02 +6.72257809e+02  2.23e+02   3.78e+01     5.88e-01   0.267s
-   2000 +1.14723097e+03 +6.45020807e+02  5.02e+02   8.76e+01     4.50e-01   0.361s
-   3000 +2.79394660e+03 +6.03364144e+02  2.19e+03   1.49e+02     3.39e-01   0.456s
-   4000 +4.47868804e+03 +5.64135303e+02  3.91e+03   1.86e+02     2.42e-01   0.551s
-   5000 +6.11110217e+03 +5.28359029e+02  5.58e+03   3.06e+02     1.71e-01   0.646s
-   6000 +7.07672460e+03 +4.90657961e+02  6.59e+03   3.93e+02     1.11e-01   0.742s
-   7000 +7.79315224e+03 +4.57388041e+02  7.34e+03   6.07e+02     6.07e-02   0.837s
-   8000 +7.89933116e+03 +4.20487570e+02  7.48e+03   6.42e+02     2.55e-02   0.932s
-   9000 +7.60342212e+03 +3.82385339e+02  7.22e+03   6.60e+02     1.99e-02   1.029s
-  10000 +7.31678111e+03 +3.04639808e+02  7.01e+03   8.14e+02     9.72e-02   1.125s
-  11000 +6.76242360e+03 +2.50686756e+02  6.51e+03   7.40e+02     1.26e-01   1.220s
-  12000 +6.09836138e+03 +2.07656691e+02  5.89e+03   6.02e+02     1.48e-01   1.316s
+Solver failed with status: 3
