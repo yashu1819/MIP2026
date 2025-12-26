@@ -214,7 +214,7 @@ int main() {
         h_activity[k] += h_A_dense[k * N + j] * h_x[j];
     }
 }
-   thrust::device_vector<int>   d_A_col_ptr = h_col_ptr;
+thrust::device_vector<int>   d_A_col_ptr = h_col_ptr;
 thrust::device_vector<int>   d_A_row_ind = h_row_ind;
 thrust::device_vector<float> d_A_val     = h_val;
 thrust::device_vector<float> d_A_dense   = h_A_dense;
