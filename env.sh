@@ -7,8 +7,9 @@ sudo rm -rf /usr/local/cuda-11*
 sudo rm -rf /usr/local/cuda
 
 # 2) Add CUDA  repo
+sudo apt update
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb -O cuda-keyring.deb
-sudo dpkg -i cuda-keyring_1.1-1_all.deb
+sudo dpkg -i cuda-keyring.deb
 
 sudo apt update
 

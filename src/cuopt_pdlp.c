@@ -97,14 +97,14 @@ cuopt_int_t solve_mps_file(const char* filename)
   }
 
   // setting PDLP
-  status= cuOptSetIntParameter(settings, CUOPT_METHOD, CUOPT_LP_METHOD_PDLP);
+  status= cuOptSetIntegerParameter(settings, CUOPT_METHOD, CUOPT_METHOD_PDLP  );
   if (status != CUOPT_SUCCESS) {
     printf("Error setting pdlp: %d\n", status);
     goto DONE;
   }
 
   //  Setting PDLP to "Fast" mode
-  cuOptSetIntParameter(settings, CUOPT_PDLP_SOLVER_MODE, CUOPT_PDLP_MODE_FAST1);
+ // cuOptSetIntegerParameter(settings, CUOPT_PDLP_SOLVER_MODE, CUOPT_PDLP_SOLVER_MODE_FAST1);
   
   // Set solver parameters
   status = cuOptSetFloatParameter(settings, CUOPT_ABSOLUTE_PRIMAL_TOLERANCE, 0.000001);

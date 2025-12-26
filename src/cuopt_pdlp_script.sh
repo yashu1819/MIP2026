@@ -1,10 +1,38 @@
 #!/bin/bash
-# Build and run the example
 
+# 1. Find the header file
+HEADER_FILE=$(find / -name "cuopt_c.h" -path "*/linear_programming/*" 2>/dev/null | head -n 1)
 
+if [ -z "$HEADER_FILE" ]; then
+    echo "Error: cuopt_c.h not found."
+    exit 1
+else
+    # FIX: Move up TWO levels from the file to reach the base 'include' directory
+    # From: .../include/cuopt/linear_programming/cuopt_c.h
+    # To:   .../include
+    INCLUDE_PATH=$(echo "$HEADER_FILE" | sed 's/\/cuopt\/linear_programming\/cuopt_c.h//')
+fi
 
-# Find the cuopt header file and assign to INCLUDE_PATH
-INCLUDE_PATH=$(find / -name "cuopt_c.h" -path "*/linear_programming/*" -printf "%h\n" | sed 's/\/linear_programming//' 2>/dev/null)
-# Find the libcuopt library and assign to LIBCUOPT_LIBRARY_PATH
-LIBCUOPT_LIBRARY_PATH=$(find / -name "libcuopt.so" 2>/dev/null)
-gcc -I $INCLUDE_PATH -L $LIBCUOPT_LIBRARY_PATH -o src/cuopt_pdlp src/cuopt_pdlp.c -lcuopt
+# 2. Find the library directory
+LIB_FILE=$(find / -name "libcuopt.so" 2>/dev/null | head -n 1)
+
+if [ -z "$LIB_FILE" ]; then
+    echo "Error: libcuopt.so not found."
+    exit 1
+else
+    LIBCUOPT_LIB_DIR=$(dirname "$LIB_FILE")
+fi
+
+echo "Include Path: $INCLUDE_PATH"
+echo "Library Dir:  $LIBCUOPT_LIB_DIR"
+export LD_LIBRARY_PATH=$LIBCUOPT_LIB_DIR:$LD_LIBRARY_PATH
+# Note: Using quotes around paths is safer in case there are spaces
+gcc -I"$INCLUDE_PATH" -L"$LIBCUOPT_LIB_DIR" -o cuopt_pdlp cuopt_pdlp.c -lcuopt
+for i in $(seq -w 1 50); do
+    MPS="../test_set/relaxedInstances/relaxed_${i}.mps"
+    LOG="pdlp_logs_1e-6/relaxed_${i}.log"
+
+    echo "Running $MPS"
+    ./cuopt_pdlp "$MPS" > "$LOG" 2>&1
+done
+
