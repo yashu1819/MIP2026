@@ -57,7 +57,7 @@ const char* termination_status_to_string(cuopt_int_t termination_status)
   }
 }
 
-cuopt_int_t solve_mps_file(const char* filename)
+cuopt_int_t solve_mps_file(const char* filename,const char* output_file )
 {
   cuOptOptimizationProblem problem = NULL;
   cuOptSolverSettings settings = NULL;
@@ -155,13 +155,36 @@ cuopt_int_t solve_mps_file(const char* filename)
     goto DONE;
   }
 
-  printf("\nPrimal Solution: First 10 solution variables (or fewer if less exist):\n");
-  for (cuopt_int_t i = 0; i < (num_variables < 10 ? num_variables : 10); i++) {
-    printf("x%d = %f\n", i + 1, solution_values[i]);
-  }
-  if (num_variables > 10) {
-    printf("... (showing only first 10 of %d variables)\n", num_variables);
-  }
+
+ FILE* fout = fopen(output_file, "w");
+
+    if (!fout) {
+
+        fprintf(stderr, "Error opening output file\n");
+
+        free(solution_values);
+
+        goto CLEANUP;
+
+    }
+
+    fprintf(fout, "Objective = %f\n", objective_value);
+
+    for (cuopt_int_t i = 0; i < num_vars; i++) {
+
+        fprintf(fout, "x%d = %f\n", i+1, solution_values[i]);
+
+    }
+
+    fclose(fout);
+
+    
+
+
+    printf("Solve completed (status %d). Objective = %f. Solution written to %s\n",
+
+           term_status, objective_value, output_file);
+  
 
 DONE:
   free(solution_values);
@@ -173,14 +196,15 @@ DONE:
 }
 
 int main(int argc, char* argv[]) {
-  if (argc != 2) {
-    printf("Usage: %s <mps_file_path>\n", argv[0]);
+  if (argc != 3) {
+    printf("Usage: %s <mps_file_path>[output_file]\n", argv[0]);
     return 1;
   }
 
   // Run the solver
-  cuopt_int_t status = solve_mps_file(argv[1]);
-
+  
+  cuopt_int_t status = solve_mps_file(argv[1], argv[2]);
+  
   if (status == CUOPT_SUCCESS) {
     printf("\nSolver completed successfully!\n");
     return 0;

@@ -51,7 +51,7 @@ pip install --pre --extra-index-url=https://pypi.nvidia.com --extra-index-url=ht
 g++ unzip.cpp -o unzip_all -lz
 ./unzip_all
 
-g++ relax.cpp -o relax \
+g++ relax.cpp -o relax 
    -lCbc -lClp -lOsiClp -lOsi -lm
 ./relax
 
