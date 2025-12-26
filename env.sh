@@ -12,8 +12,8 @@ wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/
 sudo dpkg -i cuda-keyring.deb
 
 sudo apt update
-sudo apt-get install zlib1g-dev
-sudo apt install coinor-libcbc-dev coinor-libclp-dev
+sudo apt-get -y install zlib1g-dev
+sudo apt install -y coinor-libcbc-dev coinor-libclp-dev
 
 # 3) Install CUDA toolkit
 sudo apt install -y cuda-toolkit
@@ -51,8 +51,7 @@ pip install --pre --extra-index-url=https://pypi.nvidia.com --extra-index-url=ht
 g++ unzip.cpp -o unzip_all -lz
 ./unzip_all
 
-g++ relax.cpp -o relax 
-   -lCbc -lClp -lOsiClp -lOsi -lm
+g++ relax.cpp -o relax -lCbc -lClp -lOsiClp -lOsi -lm
 ./relax
 
 # 7) Apply new environment to this session

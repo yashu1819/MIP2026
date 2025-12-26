@@ -164,13 +164,13 @@ cuopt_int_t solve_mps_file(const char* filename,const char* output_file )
 
         // free(solution_values);
 
-        goto CLEANUP;
+        goto DONE;
 
     }
 
     fprintf(fout, "Objective = %f\n", objective_value);
 
-    for (cuopt_int_t i = 0; i < num_vars; i++) {
+    for (cuopt_int_t i = 0; i < num_variables; i++) {
 
         fprintf(fout, "x%d = %f\n", i+1, solution_values[i]);
 
