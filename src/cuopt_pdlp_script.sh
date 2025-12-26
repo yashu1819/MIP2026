@@ -31,8 +31,8 @@ gcc -I"$INCLUDE_PATH" -L"$LIBCUOPT_LIB_DIR" -o cuopt_pdlp cuopt_pdlp.c -lcuopt
 for i in $(seq -w 1 50); do
     MPS="../test_set/relaxedInstances/relaxed_${i}.mps"
     LOG="pdlp_logs_1e-6/relaxed_${i}.log"
-
+    OUT="pdlp_sols_1e-6/relaxed_${i}.sol"
     echo "Running $MPS"
-    ./cuopt_pdlp "$MPS" > "$LOG" 2>&1
+    ./cuopt_pdlp "$MPS" "$OUT" > "$LOG" 2>&1
 done
 

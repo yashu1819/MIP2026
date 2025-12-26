@@ -162,7 +162,7 @@ cuopt_int_t solve_mps_file(const char* filename,const char* output_file )
 
         fprintf(stderr, "Error opening output file\n");
 
-        free(solution_values);
+        // free(solution_values);
 
         goto CLEANUP;
 
@@ -181,9 +181,7 @@ cuopt_int_t solve_mps_file(const char* filename,const char* output_file )
     
 
 
-    printf("Solve completed (status %d). Objective = %f. Solution written to %s\n",
-
-           term_status, objective_value, output_file);
+   
   
 
 DONE:
