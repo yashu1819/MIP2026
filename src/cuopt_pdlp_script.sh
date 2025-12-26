@@ -26,7 +26,7 @@ fi
 echo "Include Path: $INCLUDE_PATH"
 echo "Library Dir:  $LIBCUOPT_LIB_DIR"
 export LD_LIBRARY_PATH=$LIBCUOPT_LIB_DIR:$LD_LIBRARY_PATH
-mkdir -p pdlp_logs_1e-6
+mkdir -p pdlp_sols_1e-6
 # Note: Using quotes around paths is safer in case there are spaces
 gcc -I"$INCLUDE_PATH" -L"$LIBCUOPT_LIB_DIR" -o cuopt_pdlp cuopt_pdlp.c -lcuopt
 for i in $(seq -w 1 50); do

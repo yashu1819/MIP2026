@@ -1,4 +1,43 @@
 Reading and solving MPS file: ../test_set/relaxedInstances/relaxed_08.mps
-Error creating problem from MPS file: 3
+Setting parameter method to 1
+Setting parameter absolute_primal_tolerance to 1.000000e-06
+cuOpt version: 25.12.0, git hash: d97ff6b, host arch: x86_64, device archs: 75-real,80-real,86-real,90a-real,100f-real,120a-real,120
+CPU: AMD EPYC 7B12 64-Core Processor, threads (physical/logical): 24/24, RAM: 34.55 GiB
+CUDA 13.0, device: NVIDIA L40S (ID 0), VRAM: 47.37 GiB
+CUDA device UUID: 74ffffffd2ffffffe65f-2bfffffffe-ffff
 
-Solver failed with status: 3
+Solving a problem with 4011 constraints, 25897 variables (0 integers), and 372549 nonzeros
+Problem scaling:
+Objective coefficents range:          [2e+02, 7e+02]
+Constraint matrix coefficients range: [1e+00, 3e+02]
+Constraint rhs / bounds range:        [0e+00, 6e+00]
+Variable bounds range:                [0e+00, 2e+00]
+
+Third-party presolve is disabled, skipping
+Objective offset 0.000000 scaling_factor 1.000000
+   Iter    Primal Obj.      Dual Obj.    Gap        Primal Res.  Dual Res.   Time
+      0 +0.00000000e+00 +0.00000000e+00  0.00e+00   2.30e+01     6.81e+04   0.143s
+   1000 +3.88532633e+04 +3.88798539e+04  2.66e+01   1.98e-01     4.00e+01   0.215s
+   2000 +3.87752266e+04 +3.87705372e+04  4.69e+00   1.15e-01     3.89e+00   0.250s
+   3000 +3.87655340e+04 +3.87666471e+04  1.11e+00   7.84e-02     1.46e+00   0.285s
+   4000 +3.87669055e+04 +3.87667602e+04  1.45e-01   4.93e-02     1.09e+00   0.319s
+   5000 +3.87657094e+04 +3.87674197e+04  1.71e+00   3.04e-02     8.73e-01   0.353s
+   6000 +3.87671593e+04 +3.87673879e+04  2.29e-01   1.70e-02     9.91e-01   0.387s
+   7000 +3.87674312e+04 +3.87678206e+04  3.89e-01   1.03e-02     1.12e+00   0.420s
+LP Solver status:                Optimal
+Primal objective:                +3.87674312e+04
+Dual objective:                  +3.87678206e+04
+Duality gap (abs/rel):           +3.89e-01 / +5.02e-06
+Primal infeasibility (abs/rel):  +1.03e-02 / +9.77e-05
+Dual infeasibility (abs/rel):    +1.12e+00 / +1.64e-05
+PDLP finished
+Status: Optimal   Objective: 3.87674312e+04  Iterations: 7000  Time: 0.369s, Total time 0.424s
+
+Results:
+--------
+Number of variables: 25897
+Termination status: Optimal (1)
+Solve time: 0.423985 seconds
+Objective value: 38767.431227
+
+Solver completed successfully!

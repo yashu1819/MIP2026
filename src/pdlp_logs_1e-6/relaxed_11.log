@@ -1,4 +1,37 @@
 Reading and solving MPS file: ../test_set/relaxedInstances/relaxed_11.mps
-Error creating problem from MPS file: 3
+Setting parameter method to 1
+Setting parameter absolute_primal_tolerance to 1.000000e-06
+cuOpt version: 25.12.0, git hash: d97ff6b, host arch: x86_64, device archs: 75-real,80-real,86-real,90a-real,100f-real,120a-real,120
+CPU: AMD EPYC 7B12 64-Core Processor, threads (physical/logical): 24/24, RAM: 34.53 GiB
+CUDA 13.0, device: NVIDIA L40S (ID 0), VRAM: 47.37 GiB
+CUDA device UUID: 74ffffffd2ffffffe65f-2bfffffffe-ffff
 
-Solver failed with status: 3
+Solving a problem with 103585 constraints, 51078 variables (0 integers), and 324593 nonzeros
+Problem scaling:
+Objective coefficents range:          [1e+00, 2e+00]
+Constraint matrix coefficients range: [1e+00, 1e+00]
+Constraint rhs / bounds range:        [1e+00, 1e+00]
+Variable bounds range:                [0e+00, 1e+00]
+
+Third-party presolve is disabled, skipping
+Objective offset 9.000000 scaling_factor 1.000000
+   Iter    Primal Obj.      Dual Obj.    Gap        Primal Res.  Dual Res.   Time
+      0 +9.00000000e+00 +9.00000000e+00  0.00e+00   5.31e+01     3.45e+02   0.297s
+    920 +5.51753220e+00 +5.51860375e+00  1.07e-03   4.23e-04     7.61e-04   0.370s
+LP Solver status:                Optimal
+Primal objective:                +5.51753220e+00
+Dual objective:                  +5.51860375e+00
+Duality gap (abs/rel):           +1.07e-03 / +8.90e-05
+Primal infeasibility (abs/rel):  +4.23e-04 / +1.32e-06
+Dual infeasibility (abs/rel):    +7.61e-04 / +2.20e-06
+PDLP finished
+Status: Optimal   Objective: 5.51753220e+00  Iterations: 920  Time: 0.322s, Total time 0.379s
+
+Results:
+--------
+Number of variables: 51078
+Termination status: Optimal (1)
+Solve time: 0.378853 seconds
+Objective value: 5.517532
+
+Solver completed successfully!

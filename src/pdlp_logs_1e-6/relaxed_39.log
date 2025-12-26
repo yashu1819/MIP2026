@@ -1,4 +1,55 @@
 Reading and solving MPS file: ../test_set/relaxedInstances/relaxed_39.mps
-Error creating problem from MPS file: 3
+Setting parameter method to 1
+Setting parameter absolute_primal_tolerance to 1.000000e-06
+cuOpt version: 25.12.0, git hash: d97ff6b, host arch: x86_64, device archs: 75-real,80-real,86-real,90a-real,100f-real,120a-real,120
+CPU: AMD EPYC 7B12 64-Core Processor, threads (physical/logical): 24/24, RAM: 34.45 GiB
+CUDA 13.0, device: NVIDIA L40S (ID 0), VRAM: 47.37 GiB
+CUDA device UUID: 74ffffffd2ffffffe65f-2bfffffffe-ffff
 
-Solver failed with status: 3
+Solving a problem with 6957 constraints, 114148 variables (0 integers), and 335534 nonzeros
+Problem scaling:
+Objective coefficents range:          [1e+00, 2e+02]
+Constraint matrix coefficients range: [1e+00, 1e+00]
+Constraint rhs / bounds range:        [1e+00, 1e+00]
+Variable bounds range:                [0e+00, 1e+00]
+
+Third-party presolve is disabled, skipping
+Objective offset 93.000000 scaling_factor 1.000000
+   Iter    Primal Obj.      Dual Obj.    Gap        Primal Res.  Dual Res.   Time
+      0 +9.30000000e+01 +9.30000000e+01  0.00e+00   4.47e+00     1.91e+04   0.169s
+   1000 +4.28161494e+02 +4.30830246e+02  2.67e+00   8.34e-03     6.14e+00   0.244s
+   2000 +4.27073872e+02 +4.27676956e+02  6.03e-01   6.81e-03     1.80e+00   0.281s
+   3000 +4.26132088e+02 +4.26546335e+02  4.14e-01   2.38e-02     5.04e-01   0.318s
+   4000 +4.26392752e+02 +4.26136349e+02  2.56e-01   2.10e-02     1.44e-01   0.355s
+   5000 +4.25933105e+02 +4.26078562e+02  1.45e-01   1.53e-02     6.60e-02   0.392s
+   6000 +4.26001421e+02 +4.26063356e+02  6.19e-02   1.22e-02     4.01e-02   0.429s
+   7000 +4.25695572e+02 +4.26059210e+02  3.64e-01   1.02e-02     3.53e-02   0.466s
+   8000 +4.25717807e+02 +4.26050401e+02  3.33e-01   9.82e-03     2.05e-02   0.503s
+   9000 +4.25744128e+02 +4.26048478e+02  3.04e-01   7.79e-03     1.81e-02   0.540s
+  10000 +4.25752999e+02 +4.26047322e+02  2.94e-01   6.97e-03     1.65e-02   0.577s
+  11000 +4.25772944e+02 +4.26049992e+02  2.77e-01   6.41e-03     1.56e-02   0.613s
+  12000 +4.25772580e+02 +4.26051350e+02  2.79e-01   5.95e-03     1.53e-02   0.648s
+  13000 +4.25785429e+02 +4.26052601e+02  2.67e-01   5.32e-03     1.52e-02   0.684s
+  14000 +4.25806951e+02 +4.26053416e+02  2.46e-01   4.39e-03     4.83e-02   0.720s
+  15000 +4.25994186e+02 +4.26051737e+02  5.76e-02   1.60e-03     3.24e-02   0.755s
+  16000 +4.26054795e+02 +4.26059543e+02  4.75e-03   1.54e-03     1.82e-02   0.791s
+  17000 +4.26038150e+02 +4.26060662e+02  2.25e-02   1.09e-03     2.61e-02   0.827s
+  18000 +4.26040093e+02 +4.26063241e+02  2.31e-02   7.08e-04     2.63e-02   0.863s
+  18400 +4.26047320e+02 +4.26063995e+02  1.67e-02   3.64e-04     2.47e-02   0.877s
+LP Solver status:                Optimal
+Primal objective:                +4.26047320e+02
+Dual objective:                  +4.26063995e+02
+Duality gap (abs/rel):           +1.67e-02 / +1.95e-05
+Primal infeasibility (abs/rel):  +3.64e-04 / +6.66e-05
+Dual infeasibility (abs/rel):    +2.47e-02 / +1.29e-06
+PDLP finished
+Status: Optimal   Objective: 4.26047320e+02  Iterations: 18400  Time: 0.830s, Total time 0.886s
+
+Results:
+--------
+Number of variables: 114148
+Termination status: Optimal (1)
+Solve time: 0.885858 seconds
+Objective value: 426.047320
+
+Solver completed successfully!
