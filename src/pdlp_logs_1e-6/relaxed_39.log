@@ -1,0 +1,4 @@
+Reading and solving MPS file: ../test_set/relaxedInstances/relaxed_39.mps
+Error creating problem from MPS file: 3
+
+Solver failed with status: 3
