@@ -42,9 +42,10 @@ sudo update-alternatives --set gcc /usr/bin/gcc-12
 sudo update-alternatives --set g++ /usr/bin/g++-12
 
 # installing cuopt
-pip uninstall cuopt-thin-client
-pip install --extra-index-url=https://pypi.nvidia.com 'libcuopt-cu13==25.12.*'
-pip install --pre --extra-index-url=https://pypi.nvidia.com --extra-index-url=https://pypi.anaconda.org/rapidsai-wheels-nightly/simple/ \
+sudo apt install -y  python3-pip
+pip uninstall  cuopt-thin-client
+pip install   --extra-index-url=https://pypi.nvidia.com 'libcuopt-cu13==25.12.*'
+pip install  --pre --extra-index-url=https://pypi.nvidia.com --extra-index-url=https://pypi.anaconda.org/rapidsai-wheels-nightly/simple/ \
   'libcuopt-cu13==25.12.*'
 
 

@@ -19,7 +19,9 @@ void LPRelaxation::build_from_mip(const MIPProblem& mip)
     b  = mip.b;
 
     csr_row_ptr = mip.csr_row_ptr;
+    
     csr_col_idx = mip.csr_col_idx;
+  
     csr_val     = mip.csr_val;
 
     csc_col_ptr = mip.csc_col_ptr;
@@ -31,7 +33,7 @@ void LPRelaxation::build_from_mip(const MIPProblem& mip)
 }
 
 bool LPRelaxation::solve()
-{
+{ std::vector<cuopt_int_t> csr_row_ptr_cast(csr_row_ptr.begin(), csr_row_ptr.end());std::vector<cuopt_int_t> csr_col_idx_cast(csr_col_idx.begin(), csr_col_idx.end());
     cuOptOptimizationProblem problem = nullptr;
     cuOptSolverSettings settings = nullptr;
     cuOptSolution solution = nullptr;
@@ -54,8 +56,8 @@ bool LPRelaxation::solve()
         CUOPT_MINIMIZE,
         0.0, // objective offset
         reinterpret_cast<const cuopt_float_t*>(c.data()),
-        csr_row_ptr.data(),
-        csr_col_idx.data(),
+        csr_row_ptr_cast.data(),
+        csr_col_idx_cast.data(),
         reinterpret_cast<const cuopt_float_t*>(csr_val.data()),
         constr_lb.data(),
         constr_ub.data(),
@@ -72,7 +74,7 @@ bool LPRelaxation::solve()
         throw std::runtime_error("cuOptCreateSolverSettings failed");
 
     // PDLP solver
-    cuOptSetIntegerParameter(settings, CUOPT_METHOD, CUOPT_METHOD_PDLP);
+    cuOptSetIntegerParameter(settings, CUOPT_METHOD,CUOPT_METHOD_PDLP);
     cuOptSetFloatParameter(settings, CUOPT_ABSOLUTE_PRIMAL_TOLERANCE, 1e-6);
 
     status = cuOptSolve(problem, settings, &solution);

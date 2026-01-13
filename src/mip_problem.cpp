@@ -8,7 +8,8 @@
 
 MIPProblem::MIPProblem() {}
 
-void MIPProblem::ensure_col(int col) {
+void MIPProblem::ensure_col(int col)
+{
     if (col >= num_cols) {
         num_cols = col + 1;
         c.resize(num_cols, 0.0);
@@ -21,8 +22,8 @@ void MIPProblem::ensure_col(int col) {
 void MIPProblem::add_row_sparse(
     const std::vector<std::pair<int,double>>& entries,
     char sense,
-    double rhs
-) {
+    double rhs)
+{
     auto add_le = [&](const std::vector<std::pair<int,double>>& e, double r) {
         int row = (int)b.size();
         for (auto &p : e) {
@@ -37,20 +38,23 @@ void MIPProblem::add_row_sparse(
 
     if (sense == 'L') {
         add_le(entries, rhs);
-    } else if (sense == 'G') {
+    }
+    else if (sense == 'G') {
         std::vector<std::pair<int,double>> neg;
         neg.reserve(entries.size());
         for (auto &p : entries)
             neg.push_back({p.first, -p.second});
         add_le(neg, -rhs);
-    } else if (sense == 'E') {
+    }
+    else if (sense == 'E') {
         add_le(entries, rhs);
         std::vector<std::pair<int,double>> neg;
         neg.reserve(entries.size());
         for (auto &p : entries)
             neg.push_back({p.first, -p.second});
         add_le(neg, -rhs);
-    } else {
+    }
+    else {
         throw std::runtime_error("Unknown constraint sense");
     }
 }
@@ -65,7 +69,6 @@ void MIPProblem::load_from_mps(const std::string& filename)
     Section sec = NONE;
 
     std::unordered_map<std::string,int> row_id;
-    std::unordered_map<std::string,char> row_sense;
     std::unordered_map<std::string,int> col_id;
 
     std::string obj_row;
@@ -78,9 +81,12 @@ void MIPProblem::load_from_mps(const std::string& filename)
 
     std::vector<RowData> rows;
 
+    bool in_integer_block = false;
+
     std::string line;
     while (std::getline(in, line)) {
-        if (line.empty() || line[0] == '*') continue;
+        if (line.empty() || line[0] == '*')
+            continue;
 
         std::stringstream ss(line);
         std::string tok;
@@ -103,7 +109,6 @@ void MIPProblem::load_from_mps(const std::string& filename)
             } else {
                 int id = (int)rows.size();
                 row_id[rname] = id;
-                row_sense[rname] = s;
                 rows.push_back(RowData());
                 rows.back().sense = s;
             }
@@ -111,6 +116,18 @@ void MIPProblem::load_from_mps(const std::string& filename)
 
         /* ---------- COLUMNS ---------- */
         else if (sec == COLUMNS) {
+
+            // MARKER handling
+            if (tok == "MARKER") {
+                std::string marker;
+                ss >> marker;
+                if (marker.find("INTORG") != std::string::npos)
+                    in_integer_block = true;
+                else if (marker.find("INTEND") != std::string::npos)
+                    in_integer_block = false;
+                continue;
+            }
+
             std::string cname = tok;
 
             if (!col_id.count(cname)) {
@@ -119,6 +136,10 @@ void MIPProblem::load_from_mps(const std::string& filename)
                 ensure_col(id);
             }
             int cid = col_id[cname];
+
+            // MARKER integer block
+            if (in_integer_block && vartype[cid] == VarType::CONTINUOUS)
+                vartype[cid] = VarType::INTEGER;
 
             std::string r1;
             double v1;
@@ -129,9 +150,8 @@ void MIPProblem::load_from_mps(const std::string& filename)
                     c[cid] = v1;
                 } else {
                     auto it = row_id.find(r1);
-                    if (it != row_id.end()) {
+                    if (it != row_id.end())
                         rows[it->second].entries.push_back({cid, v1});
-                    }
                 }
             }
 
@@ -141,9 +161,8 @@ void MIPProblem::load_from_mps(const std::string& filename)
                     c[cid] = v1;
                 } else {
                     auto it = row_id.find(r1);
-                    if (it != row_id.end()) {
+                    if (it != row_id.end())
                         rows[it->second].entries.push_back({cid, v1});
-                    }
                 }
             }
         }
@@ -158,16 +177,14 @@ void MIPProblem::load_from_mps(const std::string& filename)
 
             if (ss >> r1 >> v1) {
                 auto it = row_id.find(r1);
-                if (it != row_id.end()) {
+                if (it != row_id.end())
                     rows[it->second].rhs = v1;
-                }
             }
 
             if (ss >> r1 >> v1) {
                 auto it = row_id.find(r1);
-                if (it != row_id.end()) {
+                if (it != row_id.end())
                     rows[it->second].rhs = v1;
-                }
             }
         }
 
@@ -214,16 +231,15 @@ void MIPProblem::load_from_mps(const std::string& filename)
     }
 
     /* ---------- Convert all rows to Ax <= b ---------- */
-    for (auto &r : rows) {
+    for (auto &r : rows)
         add_row_sparse(r.entries, r.sense, r.rhs);
-    }
 }
 
 void MIPProblem::finalize()
 {
     int nnz = (int)coo_val.size();
 
-    /* ---------- CSR ---------- */
+    // CSR
     csr_row_ptr.assign(num_rows + 1, 0);
     csr_col_idx.assign(nnz, 0);
     csr_val.assign(nnz, 0.0);
@@ -242,7 +258,7 @@ void MIPProblem::finalize()
         csr_val[d] = coo_val[k];
     }
 
-    /* ---------- CSC ---------- */
+    // CSC
     csc_col_ptr.assign(num_cols + 1, 0);
     csc_row_idx.assign(nnz, 0);
     csc_val.assign(nnz, 0.0);
