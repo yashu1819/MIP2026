@@ -150,7 +150,9 @@ __global__ void find_2opt_move_kernel_hybrid(
                    // If it returns 1, the lock is held, so we WAIT.
                    // 'wait(1)' puts the thread to sleep efficiently if the value is 1.
                    while (lock.exchange(1, cuda::std::memory_order_acquire) != 0) {
-                       lock.wait(1, cuda::std::memory_order_relaxed);
+                       #ifndef __CUDA_ARCH__
+			   lock.wait(1, cuda::std::memory_order_relaxed);
+                         #endif
                    }
 
                    // 3. Double-Check inside lock (Required because another thread might have updated while we waited)
@@ -166,7 +168,9 @@ __global__ void find_2opt_move_kernel_hybrid(
                    lock.store(0, cuda::std::memory_order_release);
                    
                    // Wake up any threads sleeping in 'wait()'
-                   lock.notify_all();
+                   #ifndef __CUDA_ARCH__
+		   lock.notify_all();
+#endif
                }
            }
            // wait so that next iteration waits until the current iteration results are written
