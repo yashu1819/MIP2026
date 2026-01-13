@@ -55,7 +55,7 @@ export LD_LIBRARY_PATH=$LIBCUOPT_LIB_DIR:$LD_LIBRARY_PATH
 # -----------------------------------------
 echo "[3/4] Compiling..."
 
-g++ -std=c++17 -O3 \
+g++ -std=c++17 -O0 -g \
     $SRC_MAIN $SRC_MIP $SRC_LP \
     -I"$INCLUDE_PATH" \
     -L"$LIBCUOPT_LIB_DIR" \
