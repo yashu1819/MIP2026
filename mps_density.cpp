@@ -38,7 +38,7 @@ int main() {
                 section = a;
                 continue;
             }
-
+                    
             if (section == "ROWS") {
                 // format: type row_name
                 char type = a[0];
@@ -48,7 +48,7 @@ int main() {
                 } else {
                     rows.insert(b);
                 }
-            }
+            } 
             else if (section == "COLUMNS") {
                 // format:
                 // col row val [row val]
