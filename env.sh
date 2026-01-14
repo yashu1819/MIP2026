@@ -13,8 +13,8 @@ sudo dpkg -i cuda-keyring.deb
 
 sudo apt update
 sudo apt-get -y install zlib1g-dev
-sudo apt install -y coinor-libcbc-dev coinor-libclp-dev
-
+sudo apt install -y coinor-libcbc-dev 
+sudo apt install -y coinor-libclp-dev coinor-libosi-dev coinor-libcoinutils-dev
 # 3) Install CUDA toolkit
 sudo apt install -y cuda-toolkit
 sudo apt install -y nvidia-gds

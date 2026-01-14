@@ -17,7 +17,7 @@ void LPRelaxation::build_from_mip(const MIPProblem& mip)
     lb = mip.lb;
     ub = mip.ub;
     b  = mip.b;
-
+    obj_offset= mip.obj_offset;
     csr_row_ptr = mip.csr_row_ptr;
     
     csr_col_idx = mip.csr_col_idx;
@@ -97,7 +97,7 @@ bool LPRelaxation::solve()
     if (status != CUOPT_SUCCESS)
         throw std::runtime_error("cuOptGetObjectiveValue failed");
 
-    obj_value = obj;
+    obj_value = obj+ obj_offset  ;
 
     std::vector<cuopt_float_t> sol(num_cols);
     status = cuOptGetPrimalSolution(solution, sol.data());

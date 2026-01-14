@@ -14,7 +14,7 @@ struct MIPProblem {
 
     // objective
     std::vector<double> c;
-
+    double obj_offset = 0.0;
     // bounds
     std::vector<double> lb;
     std::vector<double> ub;

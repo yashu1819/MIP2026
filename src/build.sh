@@ -55,13 +55,14 @@ export LD_LIBRARY_PATH=$LIBCUOPT_LIB_DIR:$LD_LIBRARY_PATH
 # -----------------------------------------
 echo "[3/4] Compiling..."
 
-g++ -std=c++17 -O0 -g \
-    $SRC_MAIN $SRC_MIP $SRC_LP \
+
+g++ -std=c++17 -O0 \
     -I"$INCLUDE_PATH" \
     -L"$LIBCUOPT_LIB_DIR" \
-   -lcuopt \
-    -Wl,-rpath,"$LIBCUOPT_LIB_DIR" \
-    -o "$BIN"
+    main.cpp mip_problem.cpp lp_relaxation.cpp \
+    -lClp -lOsiClp -lCoinUtils \
+    -lcuopt \
+    -o mip_lp_solver
 
 # -----------------------------------------
 # Done
