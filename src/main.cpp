@@ -12,6 +12,8 @@ int main(int argc, char** argv)
     MIPProblem mip;
     mip.load_from_mps(argv[1]);
     mip.finalize();
+    
+    
 
     LPRelaxation lp(mip);
 

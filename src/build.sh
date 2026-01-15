@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env bash 
 set -e
 
 echo "==== Building LP Relaxation with cuOpt (PDLP) ===="
@@ -16,7 +16,7 @@ BIN="mip_lp_solver"
 # -----------------------------------------
 echo "[1/4] Searching for cuOpt header (cuopt_c.h)..."
 
-HEADER_FILE=$(find / -name "cuopt_c.h" -path "*/linear_programming/*" 2>/dev/null | head -n 1)
+HEADER_FILE=$(find /usr -name "cuopt_c.h" -path "*/linear_programming/*" 2>/dev/null | head -n 1)
 
 if [ -z "$HEADER_FILE" ]; then
     echo "ERROR: cuopt_c.h not found"
@@ -69,4 +69,6 @@ g++ -std=c++17 -O0 \
 # -----------------------------------------
 echo "[4/4] Build successful"
 echo "Binary created: ./$BIN"
+
+
 

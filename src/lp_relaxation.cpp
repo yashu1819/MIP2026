@@ -17,7 +17,7 @@ void LPRelaxation::build_from_mip(const MIPProblem& mip)
     lb = mip.lb;
     ub = mip.ub;
     b  = mip.b;
-    obj_offset= mip.obj_offset;
+    obj_offset=-1* mip.obj_offset;
     csr_row_ptr = mip.csr_row_ptr;
     
     csr_col_idx = mip.csr_col_idx;
