@@ -1,11 +1,3 @@
-#!/usr/bin/env bash 
-set -e
-
-echo "==== Building LP Relaxation with cuOpt (PDLP) ===="
-
-# -----------------------------------------
-# Source files and binary name
-# -----------------------------------------
 SRC_MAIN="main.cpp"
 SRC_MIP="mip_problem.cpp"
 SRC_LP="lp_relaxation.cpp"
@@ -16,7 +8,7 @@ BIN="mip_lp_solver"
 # -----------------------------------------
 echo "[1/4] Searching for cuOpt header (cuopt_c.h)..."
 
-HEADER_FILE=$(find /usr -name "cuopt_c.h" -path "*/linear_programming/*" 2>/dev/null | head -n 1)
+HEADER_FILE=$(find / -name "cuopt_c.h" -path "*/linear_programming/*" 2>/dev/null | head -n 1)
 
 if [ -z "$HEADER_FILE" ]; then
     echo "ERROR: cuopt_c.h not found"
@@ -46,7 +38,7 @@ LIBCUOPT_LIB_DIR=$(dirname "$LIB_FILE")
 echo "Found cuOpt library path: $LIBCUOPT_LIB_DIR"
 
 # -----------------------------------------
-# 3. Export runtime library path
+# 3. Export runtime library path (optional)
 # -----------------------------------------
 export LD_LIBRARY_PATH=$LIBCUOPT_LIB_DIR:$LD_LIBRARY_PATH
 
@@ -55,20 +47,26 @@ export LD_LIBRARY_PATH=$LIBCUOPT_LIB_DIR:$LD_LIBRARY_PATH
 # -----------------------------------------
 echo "[3/4] Compiling..."
 
-
 g++ -std=c++17 -O0 \
     -I"$INCLUDE_PATH" \
     -L"$LIBCUOPT_LIB_DIR" \
     main.cpp mip_problem.cpp lp_relaxation.cpp \
     -lClp -lOsiClp -lCoinUtils \
     -lcuopt \
+    -Wl,-rpath,"$LIBCUOPT_LIB_DIR" \
     -o mip_lp_solver
 
-# -----------------------------------------
-# Done
-# -----------------------------------------
 echo "[4/4] Build successful"
-echo "Binary created: ./$BIN"
+echo "Binary: ./mip_lp_solver"
+OUT=lp_results.csv
+echo "instance,lp_objective" > $OUT
 
+for i in $(seq -w 1 50); do
+    MPS="../test_set/instances/instance_${i}.mps"
 
+    ./mip_lp_solver "$MPS" >> $OUT
+     echo "$MPS done"
+done
+
+echo "LP results written to $OUT"
 

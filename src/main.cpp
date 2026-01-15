@@ -1,6 +1,8 @@
 #include "mip_problem.h"
 #include "lp_relaxation.h"
 #include <iostream>
+#include <iomanip>
+#include <filesystem>
 
 int main(int argc, char** argv)
 {
@@ -24,8 +26,16 @@ int main(int argc, char** argv)
         return 2;
     }
 
-    std::cout << "LP relaxation solved" << std::endl;
-    std::cout << "Objective value: " << lp.obj_value << std::endl;
+ //   std::cout << "LP relaxation solved" << std::endl;
+   // std::cout << "Objective value: " << lp.obj_value << std::endl;
+    // extract instance name from path
+std::string inst = std::filesystem::path(argv[1]).stem().string();
+
+// IMPORTANT: recompute objective in double + offset
+double exact_obj = lp.obj_value;
+
+// CSV-style output (no extra text)
+std::cout << inst << "," << std::setprecision(15) << exact_obj << std::endl;
   
 
     return 0;

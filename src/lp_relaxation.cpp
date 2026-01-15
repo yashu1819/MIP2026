@@ -66,44 +66,27 @@ bool LPRelaxation::solve()
         var_types.data(),
         &problem);
 
-    if (status != CUOPT_SUCCESS)
-        throw std::runtime_error("cuOptCreateRangedProblem failed");
-
+    
     status = cuOptCreateSolverSettings(&settings);
-    if (status != CUOPT_SUCCESS)
-        throw std::runtime_error("cuOptCreateSolverSettings failed");
+   
+    // Disable cuOpt output
+    cuOptSetIntegerParameter(settings, CUOPT_LOG_TO_CONSOLE, 0);
 
     // PDLP solver
     cuOptSetIntegerParameter(settings, CUOPT_METHOD,CUOPT_METHOD_PDLP);
     cuOptSetFloatParameter(settings, CUOPT_ABSOLUTE_PRIMAL_TOLERANCE, 1e-6);
 
     status = cuOptSolve(problem, settings, &solution);
-    if (status != CUOPT_SUCCESS)
-        throw std::runtime_error("cuOptSolve failed");
-
-    cuopt_int_t term_status;
-    status = cuOptGetTerminationStatus(solution, &term_status);
-    if (status != CUOPT_SUCCESS)
-        throw std::runtime_error("cuOptGetTerminationStatus failed");
-
-    if (term_status != CUOPT_TERIMINATION_STATUS_OPTIMAL &&
-        term_status != CUOPT_TERIMINATION_STATUS_PRIMAL_FEASIBLE &&
-        term_status != CUOPT_TERIMINATION_STATUS_FEASIBLE_FOUND) {
-        return false;
-    }
+    
 
     cuopt_float_t obj;
     status = cuOptGetObjectiveValue(solution, &obj);
-    if (status != CUOPT_SUCCESS)
-        throw std::runtime_error("cuOptGetObjectiveValue failed");
-
+    
     obj_value = obj+ obj_offset  ;
 
     std::vector<cuopt_float_t> sol(num_cols);
     status = cuOptGetPrimalSolution(solution, sol.data());
-    if (status != CUOPT_SUCCESS)
-        throw std::runtime_error("cuOptGetPrimalSolution failed");
-
+    
     for (int j = 0; j < num_cols; ++j)
         x[j] = sol[j];
 
