@@ -75,7 +75,10 @@ bool LPRelaxation::solve()
     // PDLP solver
     cuOptSetIntegerParameter(settings, CUOPT_METHOD,CUOPT_METHOD_PDLP);
     cuOptSetFloatParameter(settings, CUOPT_ABSOLUTE_PRIMAL_TOLERANCE, 1e-6);
-
+    // setting time limit if needed
+    // status = cuOptSetFloatParameter(settings, CUOPT_TIME_LIMIT, 50.0f);
+   
+    //solve problem 
     status = cuOptSolve(problem, settings, &solution);
     
 

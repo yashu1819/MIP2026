@@ -7,7 +7,7 @@
 #include <iomanip>
 
 int main() {
-    for (int idx = 1; idx <= 50; idx++) {
+    for (int idx = 13; idx <= 50; idx++) {
         std::ostringstream fname;
         fname << "test_set/instances/instance_"
               << std::setw(2) << std::setfill('0') << idx
