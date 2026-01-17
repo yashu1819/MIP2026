@@ -1,5 +1,4 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 # 1) Remove old CUDA 11 toolkit (not drivers)
 sudo apt remove --purge -y "cuda-11*" "cuda-toolkit-11*"
 sudo apt autoremove -y

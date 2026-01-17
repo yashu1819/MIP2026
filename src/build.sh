@@ -50,7 +50,7 @@ echo "[3/4] Compiling..."
 g++ -std=c++17 -O0 \
     -I"$INCLUDE_PATH" \
     -L"$LIBCUOPT_LIB_DIR" \
-    main.cpp mip_problem.cpp lp_relaxation.cpp \
+    main.cpp mip_problem.cpp lp_relaxation.cpp feasibility_pump.cpp \
     -lClp -lOsiClp -lCoinUtils \
     -lcuopt \
     -Wl,-rpath,"$LIBCUOPT_LIB_DIR" \
@@ -58,15 +58,4 @@ g++ -std=c++17 -O0 \
 
 echo "[4/4] Build successful"
 echo "Binary: ./mip_lp_solver"
-OUT=lp_results.csv
-echo "instance,lp_objective" > $OUT
-
-for i in $(seq -w 1 50); do
-    MPS="../test_set/instances/instance_${i}.mps"
-
-    ./mip_lp_solver "$MPS" >> $OUT
-     echo "$MPS done"
-done
-
-echo "LP results written to $OUT"
 

@@ -1,4 +1,6 @@
 #include "mip_problem.h"
+#include <cmath>
+#include <iostream>
 
 #include <coin/OsiClpSolverInterface.hpp>
 #include <coin/CoinPackedMatrix.hpp>
@@ -181,5 +183,65 @@ void MIPProblem::finalize()
         csc_row_idx[d] = coo_row[k];
         csc_val[d] = coo_val[k];
     }
+}
+bool MIPProblem::check_feasible(
+    const std::vector<double>& x,
+    double constr_tol,
+    double int_tol
+) const {
+    // Dimension check
+    if ((int)x.size() != num_cols) {
+    //    std::cerr << "Feasibility check failed: wrong dimension\n";
+        return false;
+    }
+
+    /* ================= Bounds ================= */
+
+    for (int j = 0; j < num_cols; ++j) {
+        if (x[j] < lb[j] - constr_tol || x[j] > ub[j] + constr_tol) {
+      //      std::cerr << "Bound violation at var " << j << "\n";
+          return false;
+        }
+    }
+
+    /* ================= Integrality ================= */
+
+    for (int j = 0; j < num_cols; ++j) {
+        if (vartype[j] == VarType::INTEGER ||
+            vartype[j] == VarType::BINARY) {
+
+            double r = std::round(x[j]);
+            if (std::fabs(x[j] - r) > int_tol) {
+       //         std::cerr << "Integrality violation at var " << j << "\n";
+                return false;
+            }
+
+            if (vartype[j] == VarType::BINARY) {
+                if (!(r == 0.0 || r == 1.0)) {
+         //           std::cerr << "Binary violation at var " << j << "\n";
+                    return false;
+                }
+            }
+        }
+    }
+
+    /* ================= Constraints: Ax <= b ================= */
+
+    // Using CSR: row-wise accumulation
+    for (int i = 0; i < num_rows; ++i) {
+        double activity = 0.0;
+        for (int p = csr_row_ptr[i]; p < csr_row_ptr[i + 1]; ++p) {
+            activity += csr_val[p] * x[csr_col_idx[p]];
+        }
+
+        if (activity > b[i] + constr_tol) {
+           // std::cerr << "Constraint violation at row " << i
+             //         << " : activity = " << activity
+               //       << " , rhs = " << b[i] << "\n";
+            return false;
+        }
+    }
+
+    return true;
 }
 
