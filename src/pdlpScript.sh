@@ -8,7 +8,7 @@ BIN="mip_lp_solver"
 # -----------------------------------------
 echo "[1/4] Searching for cuOpt header (cuopt_c.h)..."
 
-HEADER_FILE=$(find / -name "cuopt_c.h" -path "/linear_programming/" 2>/dev/null | head -n 1)
+HEADER_FILE=$(find / -name "cuopt_c.h" -path "*/linear_programming/*" 2>/dev/null | head -n 1)
 
 if [ -z "$HEADER_FILE" ]; then
     echo "ERROR: cuopt_c.h not found"
@@ -50,7 +50,7 @@ echo "[3/4] Compiling..."
 g++ -std=c++17 -O0 \
     -I"$INCLUDE_PATH" \
     -L"$LIBCUOPT_LIB_DIR" \
-    main.cpp mip_problem.cpp lp_relaxation.cpp \
+    mainPDLP.cpp mip_problem.cpp lp_relaxation.cpp \
     -lClp -lOsiClp -lCoinUtils \
     -lcuopt \
     -Wl,-rpath,"$LIBCUOPT_LIB_DIR" \
@@ -58,7 +58,7 @@ g++ -std=c++17 -O0 \
 
 echo "[4/4] Build successful"
 echo "Binary: ./mip_lp_solver"
-echo "instance,lp_objective" > $OUT
+
 
 for i in $(seq -w 1 50); do
     MPS="../test_set/instances/instance_${i}.mps"
