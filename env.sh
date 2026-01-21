@@ -39,24 +39,11 @@ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 120
 # Force-select gcc-12 and g++-12 without prompt
 sudo update-alternatives --set gcc /usr/bin/gcc-12
 sudo update-alternatives --set g++ /usr/bin/g++-12
-
-# installing cuopt
-sudo apt install -y  python3-pip
-pip uninstall  cuopt-thin-client
-pip install   --extra-index-url=https://pypi.nvidia.com 'libcuopt-cu13==25.12.*'
-pip install  --pre --extra-index-url=https://pypi.nvidia.com --extra-index-url=https://pypi.anaconda.org/rapidsai-wheels-nightly/simple/ \
-  'libcuopt-cu13==25.12.*'
-
-
-g++ unzip.cpp -o unzip_all -lz
-./unzip_all
-
-g++ relax.cpp -o relax -lCbc -lClp -lOsiClp -lOsi -lm
-./relax
-
+sudo  apt update
 # 7) Apply new environment to this session
 source ~/.bashrc
 
 echo ""
 echo "Done. Close and reopen terminal or run: source ~/.bashrc"
 echo "Check with: nvcc --version  |  gcc --version"
+

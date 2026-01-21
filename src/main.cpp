@@ -16,9 +16,12 @@ int main(int argc, char** argv) {
 
     Solution sol;
     FeasibilityPump fp(mip);
-if (fp.run(sol,500)) {
+if (fp.run(sol,50)) {
     std::cout << "Feasible solution found by FP\n";
     std::cout << "Time (sec): " << fp.last_runtime_sec() << "\n";
+    std::cout<<"variables:\n";
+    for (auto var: sol.x)std::cout<<var<<" ";
+    std::cout<<"\n"; 
     std::cout << "Objective : " << sol.obj_value << "\n";
 
     bool ok = mip.check_feasible(sol.x, 1e-6, 1e-5);
