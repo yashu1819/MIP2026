@@ -47,14 +47,28 @@ export LD_LIBRARY_PATH=$LIBCUOPT_LIB_DIR:$LD_LIBRARY_PATH
 # -----------------------------------------
 echo "[3/4] Compiling..."
 
-g++ -std=c++17 -O0 \
-    -I"$INCLUDE_PATH" \
-    -L"$LIBCUOPT_LIB_DIR" \
-    main.cpp mip_problem.cpp lp_relaxation.cpp feasibility_pump.cpp \
-    -lClp -lOsiClp -lCoinUtils \
-    -lcuopt \
-    -Wl,-rpath,"$LIBCUOPT_LIB_DIR" \
-    -o mip_lp_solver
+#g++ -std=c++17 -O0 \
+#    -I"$INCLUDE_PATH" \
+#    -L"$LIBCUOPT_LIB_DIR" \
+#    main.cpp mip_problem.cpp lp_relaxation.cpp feasibility_pump.cpp \
+#    -lClp -lOsiClp -lCoinUtils \
+#    -lcuopt \
+#    -Wl,-rpath,"$LIBCUOPT_LIB_DIR" \
+#    -o mip_lp_solver
+
+nvcc \
+  -std=c++17 \
+  -O3 \
+  main.cpp \
+  mip_problem.cpp \
+  feasibility_jump.cu \
+   -lOsiClp \
+  -lClp \
+  -lOsi \
+  -lCoinUtils \
+  -o fj_solver
+
+
 
 echo "[4/4] Build successful"
 echo "Binary: ./mip_lp_solver"
