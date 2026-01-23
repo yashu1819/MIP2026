@@ -135,7 +135,7 @@ FeasibilityJump::FeasibilityJump(const MIPProblem& p)
     // Scoring result buffers
     cudaMalloc(&d_scores, prob.num_cols * sizeof(double));
     cudaMalloc(&d_deltas, prob.num_cols * sizeof(double));
-
+    weights.resize(prob.num_rows);
     // Initial copies
     cudaMemcpy(d_b, prob.b.data(), prob.num_rows * sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(d_lb, prob.lb.data(), prob.num_cols * sizeof(double), cudaMemcpyHostToDevice);
@@ -175,9 +175,23 @@ void FeasibilityJump::initialize() {
         else
             x[j] = std::max(prob.lb[j], std::min(0.0, prob.ub[j]));
     }
-    std::vector<double> init_weights(prob.num_rows, 1.0);
-    cudaMemcpy(d_weights, init_weights.data(), prob.num_rows * sizeof(double), cudaMemcpyHostToDevice);
-}
+    LPRelaxation lp;
+    lp.build_from_mip(prob);
+    lp.solve();
+    for (int j=0; j<prob.num_cols; j++){
+     
+        if (prob.vartype[j] == VarType::BINARY)
+            x[j] = (lp.x[j] < 0.5) ? 0.0 : 1.0;
+        else if (prob.vartype[j] == VarType::INTEGER)
+            x[j] = std::round(lp.x[j]);
+        else
+            x[j] = lp.x[j];
+    }
+
+std::fill(weights.begin(), weights.end(), 1.0);
+    cudaMemcpy(d_weights, weights.data(), 
+               prob.num_rows * sizeof(double), 
+               cudaMemcpyHostToDevice);}
 
 Solution FeasibilityJump::run(const FeasibilityJumpParams& params) {
     int block_size = 256;
@@ -187,7 +201,9 @@ Solution FeasibilityJump::run(const FeasibilityJumpParams& params) {
         initialize();
 
         for (int it = 0; it < params.max_iters; ++it) {
-            // 1. Sync x to GPU and compute current residuals
+                 std::cout<<it<<"\n";
+    
+		// 1. Sync x to GPU and compute current residuals
             cudaMemcpy(d_x, x.data(), prob.num_cols * sizeof(double), cudaMemcpyHostToDevice);
             compute_residuals_kernel<<<grid_rows, block_size>>>(
                 prob.num_rows, d_csr_row_ptr, d_csr_col_idx, d_csr_val, d_x, d_b, d_residuals

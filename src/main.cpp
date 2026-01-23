@@ -15,12 +15,18 @@ int main(int argc, char** argv) {
     FeasibilityJump fj(prob);
 
     FeasibilityJumpParams params;
-    params.max_iters = 5000;
+    params.max_iters = 1000000;
 
     Solution sol = fj.run(params);
     std::cout<<"Solution :\n";
   //  for (auto var: sol.x)std::cout<<var<<" ";
     std::cout<<"\n";
+    std::cout<<prob.check_feasible(sol.x)<<"\n";
+    double objVal=0;
+    for (int i=0; i<prob.num_cols; i++)objVal+=prob.c[i]*sol.x[i];
+    std::vector<double> init_weights(prob.num_rows, 1.0);
+    objVal-=prob.obj_offset;
+    std::cout<<"Objective value = "<<objVal<<"\n";
     if (sol.feasible) {
         std::cout << "Feasible solution found\n";
     } else {

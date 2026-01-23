@@ -1,6 +1,7 @@
 #ifndef FEASIBILITY_JUMP_H
 #define FEASIBILITY_JUMP_H
 
+#include "lp_relaxation.h"
 #include "mip_problem.h"
 #include <vector>
 #include <random>

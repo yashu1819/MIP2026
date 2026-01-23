@@ -58,14 +58,13 @@ echo "[3/4] Compiling..."
 
 nvcc \
   -std=c++17 \
-  -O3 \
-  main.cpp \
-  mip_problem.cpp \
-  feasibility_jump.cu \
-   -lOsiClp \
-  -lClp \
-  -lOsi \
-  -lCoinUtils \
+  -O3 -g -G \
+-I"$INCLUDE_PATH" \
+    -L"$LIBCUOPT_LIB_DIR" \
+  main.cpp  mip_problem.cpp feasibility_jump.cu lp_relaxation.cpp \
+  -lCoinUtils -lClp -lOsiClp -lOsi \
+ -lcuopt \
+    -Xlinker -rpath,"$LIBCUOPT_LIB_DIR" \
   -o fj_solver
 
 
