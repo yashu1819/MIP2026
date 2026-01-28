@@ -244,4 +244,9 @@ bool MIPProblem::check_feasible(
 
     return true;
 }
-
+double getTime() {
+    auto now = std::chrono::high_resolution_clock::now();
+    auto duration = now.time_since_epoch();
+    // Convert to seconds as a double
+    return std::chrono::duration<double>(duration).count();
+}

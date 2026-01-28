@@ -6,17 +6,14 @@
 #include <vector>
 #include <random>
 #include <cuda_runtime.h>
+#include "solution.h"
 
 struct FeasibilityJumpParams {
-    int max_restarts = 10;
+    int max_restarts = 1;
     int max_iters = 1000;
     double constr_tol = 1e-6;
 };
 
-struct Solution {
-    bool feasible;
-    std::vector<double> x;
-};
 
 class FeasibilityJump {
 public:

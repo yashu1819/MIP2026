@@ -67,8 +67,24 @@ nvcc \
     -Xlinker -rpath,"$LIBCUOPT_LIB_DIR" \
   -o fj_solver
 
+SOLVER="./fj_solver"
+INSTANCE_DIR="../test_set/instances"
 
+# Loop from 1 to 50
+for i in $(seq -f "%02g" 1 50)
+do
+   # echo "--------------------------------------------------"
+    echo "Running Instance: instance_$i.mps"
+    
+    # Execute the command
+    $SOLVER $INSTANCE_DIR/instance_$i.mps
+    
+    # Optional: Check if the solver exited successfully
+   # if [ $? -ne 0 ]; then
+    #    echo "Error: Solver failed on instance_$i.mps"
+   # fi
+done
 
 echo "[4/4] Build successful"
-echo "Binary: ./mip_lp_solver"
+#echo "Binary: ./mip_lp_solver"
 

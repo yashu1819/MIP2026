@@ -5,7 +5,9 @@
 #include <string>
 #include <unordered_map>
 #include <cstdint>
+#include <chrono>
 
+double getTime() ;
 enum class VarType : uint8_t { CONTINUOUS = 0, INTEGER = 1, BINARY = 2 };
 
 struct MIPProblem {

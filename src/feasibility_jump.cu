@@ -143,18 +143,13 @@ FeasibilityJump::FeasibilityJump(const MIPProblem& p)
     cudaMemcpy(d_vartype, prob.vartype.data(), prob.num_cols * sizeof(uint8_t), cudaMemcpyHostToDevice);
 
     cudaMemcpy(d_csr_row_ptr, prob.csr_row_ptr.data(), (prob.num_rows + 1) * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_csr_col_idx, prob.csr_col_idx.data(), prob.csr_col_idx.size() * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_csr_col_idx, prob.csr_col_idx.data(), prob.csr_col_idx.size()* sizeof(int),cudaMemcpyHostToDevice);
     cudaMemcpy(d_csr_val, prob.csr_val.data(), prob.csr_val.size() * sizeof(double), cudaMemcpyHostToDevice);
     // Corrected cudaMemcpy calls
-cudaMemcpy(d_csc_col_ptr, prob.csc_col_ptr.data(), 
-           (prob.num_cols + 1) * sizeof(int), cudaMemcpyHostToDevice);
-
-// Fixed: Added prob.csc_row_idx.data() as the source pointer
-cudaMemcpy(d_csc_row_idx, prob.csc_row_idx.data(), 
-           prob.csc_row_idx.size() * sizeof(int), cudaMemcpyHostToDevice);
-
-cudaMemcpy(d_csc_val, prob.csc_val.data(), 
-           prob.csc_val.size() * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_csc_col_ptr, prob.csc_col_ptr.data(), (prob.num_cols + 1) * sizeof(int), cudaMemcpyHostToDevice);
+   // Fixed: Added prob.csc_row_idx.data() as the source pointer
+   cudaMemcpy(d_csc_row_idx, prob.csc_row_idx.data(),prob.csc_row_idx.size() * sizeof(int), cudaMemcpyHostToDevice);
+   cudaMemcpy(d_csc_val, prob.csc_val.data(),  prob.csc_val.size() * sizeof(double), cudaMemcpyHostToDevice); 
 }
 
 FeasibilityJump::~FeasibilityJump() {
@@ -196,14 +191,21 @@ std::fill(weights.begin(), weights.end(), 1.0);
 Solution FeasibilityJump::run(const FeasibilityJumpParams& params) {
     int block_size = 256;
     int grid_rows = (prob.num_rows + block_size - 1) / block_size;
-
+    int t1= getTime();
     for (int r = 0; r < params.max_restarts; ++r) {
         initialize();
 
         for (int it = 0; it < params.max_iters; ++it) {
-                 std::cout<<it<<"\n";
-    
-		// 1. Sync x to GPU and compute current residuals
+           //0. Check for time limit
+	   if (getTime()-t1>180){
+	      Solution sol; sol.feasible = false; sol.x = x;
+                return sol;
+
+	   }	
+
+
+
+            // 1. Sync x to GPU and compute current residuals
             cudaMemcpy(d_x, x.data(), prob.num_cols * sizeof(double), cudaMemcpyHostToDevice);
             compute_residuals_kernel<<<grid_rows, block_size>>>(
                 prob.num_rows, d_csr_row_ptr, d_csr_col_idx, d_csr_val, d_x, d_b, d_residuals
@@ -236,20 +238,20 @@ Solution FeasibilityJump::run(const FeasibilityJumpParams& params) {
             } else {
                 // No improving move found: pull residuals to update weights on CPU (or do on GPU)
                 cudaMemcpy(residuals.data(), d_residuals, prob.num_rows * sizeof(double), cudaMemcpyDeviceToHost);
-                bool all_feasible = true;
+                //bool all_feasible = true;
                 for (int i = 0; i < prob.num_rows; ++i) {
                     if (residuals[i] < -params.constr_tol) {
                         weights[i] += 1.0;
-                        all_feasible = false;
+              //          all_feasible = false;
                     }
                 }
                 cudaMemcpy(d_weights, weights.data(), prob.num_rows * sizeof(double), cudaMemcpyHostToDevice);
-                
-                if (all_feasible && prob.check_feasible(x)) {
-                    Solution sol; sol.feasible = true; sol.x = x;
-                    return sol;
-                }
+	    }  
+            if ( prob.check_feasible(x)) {
+                Solution sol; sol.feasible = true; sol.x = x;
+                return sol;
             }
+            
         }
     }
 
