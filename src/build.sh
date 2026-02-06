@@ -74,10 +74,10 @@ INSTANCE_DIR="../test_set/instances"
 for i in $(seq -f "%02g" 1 50)
 do
    # echo "--------------------------------------------------"
-    echo "Running Instance: instance_$i.mps"
+#    echo "Running Instance: instance_$i.mps"
     
     # Execute the command
-    $SOLVER $INSTANCE_DIR/instance_$i.mps
+ #   $SOLVER $INSTANCE_DIR/instance_$i.mps
     
     # Optional: Check if the solver exited successfully
    # if [ $? -ne 0 ]; then
