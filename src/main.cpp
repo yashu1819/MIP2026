@@ -1,5 +1,5 @@
 #include "mip_problem.h"
-#include "feasibility_jump.h"
+#include "feasibility_pump.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -40,10 +40,10 @@ int main(int argc, char** argv) {
     prob.load_from_mps(argv[1]);
     prob.finalize();
 
-    FeasibilityJump fj(prob);
+    FeasibilityPump fj(prob);
 
-    FeasibilityJumpParams params;
-    params.max_iters = 1000000;
+    FeasibilityPumpParams params;
+   // params.max_iters = 1000000;
 
     Solution sol = fj.run(params);
 //    std::cout<<"Solution :\n";
