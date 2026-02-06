@@ -1,0 +1,17 @@
+Reading and solving MPS file: ../test_set/relaxedInstances/relaxed_14.mps
+Setting parameter method to 1
+Setting parameter absolute_primal_tolerance to 1.000000e-06
+cuOpt version: 25.12.0, git hash: d97ff6b, host arch: x86_64, device archs: 75-real,80-real,86-real,90a-real,100f-real,120a-real,120
+CPU: Intel(R) Xeon(R) CPU @ 2.30GHz, threads (physical/logical): 1/1, RAM: 0.88 GiB
+CUDA 13.0, device: Tesla T4 (ID 0), VRAM: 14.56 GiB
+CUDA device UUID: 774fffffff83ffffffcb-ffffff8b16-ffff
+
+Solving a problem with 5874 constraints, 22970 variables (0 integers), and 610580 nonzeros
+Problem scaling:
+Objective coefficents range:          [7e+00, 6e+03]
+Constraint matrix coefficients range: [3e-02, 1e+04]
+Constraint rhs / bounds range:        [1e+00, 2e+03]
+Variable bounds range:                [1e+00, 1e+04]
+
+Third-party presolve is disabled, skipping
+Objective offset 2250.000000 scaling_factor 1.000000

@@ -1,0 +1,30 @@
+Setting parameter method to 1
+Setting parameter absolute_primal_tolerance to 1.000000e-06
+Setting parameter time_limit to 1.800000e+02
+Setting parameter save_best_primal_so_far to true
+cuOpt version: 25.12.0, git hash: d97ff6b, host arch: x86_64, device archs: 70-real,75-real,80-real,86-real,90a-real,100f-real,120a-real,120
+CPU: 13th Gen Intel(R) Core(TM) i9-13900K, threads (physical/logical): 24/32, RAM: 56.57 GiB
+CUDA 12.9, device: NVIDIA GeForce RTX 4090 (ID 0), VRAM: 23.51 GiB
+CUDA device UUID: ffffffac5e1cffffffb4-ffffffe33a-6134
+
+Solving a problem with 103585 constraints, 51078 variables (0 integers), and 324593 nonzeros
+Problem scaling:
+Objective coefficents range:          [1e+00, 2e+00]
+Constraint matrix coefficients range: [1e+00, 1e+00]
+Constraint rhs / bounds range:        [1e+00, 1e+00]
+Variable bounds range:                [0e+00, 1e+00]
+
+Third-party presolve is disabled, skipping
+Objective offset 9.000000 scaling_factor 1.000000
+   Iter    Primal Obj.      Dual Obj.    Gap        Primal Res.  Dual Res.   Time
+      0 +9.00000000e+00 +9.00000000e+00  0.00e+00   5.31e+01     3.45e+02   0.219s
+    920 +5.51753220e+00 +5.51860375e+00  1.07e-03   4.23e-04     7.61e-04   0.285s
+LP Solver status:                Optimal
+Primal objective:                +5.51753220e+00
+Dual objective:                  +5.51860375e+00
+Duality gap (abs/rel):           +1.07e-03 / +8.90e-05
+Primal infeasibility (abs/rel):  +4.23e-04 / +1.32e-06
+Dual infeasibility (abs/rel):    +7.61e-04 / +2.20e-06
+PDLP finished
+Status: Optimal   Objective: 5.51753220e+00  Iterations: 920  Time: 0.266s, Total time 0.288s
+Solve completed (status 1). Objective = 5.517532. Solution written to results_pdlp_1e-06/relaxed_11_sol.txt

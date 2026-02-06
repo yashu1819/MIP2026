@@ -1,0 +1,6 @@
+Status: 9
+Solved to optimality: False
+Objective value: None
+Solve time (seconds): 185.60399985313416
+
+Variable values:

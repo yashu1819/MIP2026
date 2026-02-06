@@ -1,0 +1,32 @@
+Setting parameter method to 1
+Setting parameter absolute_primal_tolerance to 1.000000e-06
+Setting parameter time_limit to 1.800000e+02
+Setting parameter save_best_primal_so_far to true
+cuOpt version: 25.12.0, git hash: d97ff6b, host arch: x86_64, device archs: 70-real,75-real,80-real,86-real,90a-real,100f-real,120a-real,120
+CPU: 13th Gen Intel(R) Core(TM) i9-13900K, threads (physical/logical): 24/32, RAM: 54.46 GiB
+CUDA 12.9, device: NVIDIA GeForce RTX 4090 (ID 0), VRAM: 23.51 GiB
+CUDA device UUID: ffffffac5e1cffffffb4-ffffffe33a-6134
+
+Solving a problem with 665476 constraints, 547274 variables (0 integers), and 3317416 nonzeros
+Problem scaling:
+Objective coefficents range:          [2e-01, 4e+05]
+Constraint matrix coefficients range: [4e-05, 3e+03]
+Constraint rhs / bounds range:        [2e-13, 2e+04]
+Variable bounds range:                [3e-02, 9e+03]
+Warning: input problem contains a large range of coefficients: consider reformulating to avoid numerical difficulties.
+
+Third-party presolve is disabled, skipping
+Objective offset 2061869838.862771 scaling_factor 1.000000
+   Iter    Primal Obj.      Dual Obj.    Gap        Primal Res.  Dual Res.   Time
+      0 +2.06186984e+09 +2.06186984e+09  0.00e+00   1.32e+04     8.15e+06   1.474s
+   1000 +4.12824792e+07 +7.36144813e+07  3.23e+07   6.19e+01     8.72e+03   1.728s
+   2000 +5.96330446e+07 +7.05896456e+07  1.10e+07   1.91e+01     4.55e+03   1.914s
+   3000 +5.87701894e+07 +6.69089082e+07  8.14e+06   1.78e+01     2.38e+03   2.100s
+   4000 +5.74640133e+07 +6.39980841e+07  6.53e+06   1.34e+01     1.30e+03   2.286s
+   5000 +5.64611288e+07 +6.21443744e+07  5.68e+06   1.34e+01     9.09e+02   2.471s
+   6000 +5.59327674e+07 +5.97034189e+07  3.77e+06   2.44e+01     4.99e+02   2.657s
+   7000 +5.56815108e+07 +5.84574075e+07  2.78e+06   2.28e+01     2.90e+02   2.842s
+   8000 +5.56139449e+07 +5.79467800e+07  2.33e+06   1.18e+01     1.97e+02   3.028s
+   9000 +5.56166767e+07 +5.76818705e+07  2.07e+06   9.49e+00     1.52e+02   3.213s
+  10000 +5.56511217e+07 +5.69614387e+07  1.31e+06   1.06e+01     9.92e+01   3.398s
+  11000 +5.56976263e+07 +5.68107838e+07  1.11e+06   9.36e+00     6.94e+01   3.581s
