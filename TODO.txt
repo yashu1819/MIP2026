@@ -1,0 +1,6 @@
+In no particular order
+
+- JAX lookup
+- How can ML be integrated if possible? as no pre-training is allowed 
+- LNS Based algorithms if can be integrated
+- Parallelizing to death
