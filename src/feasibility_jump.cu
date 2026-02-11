@@ -191,7 +191,7 @@ std::fill(weights.begin(), weights.end(), 1.0);
 Solution FeasibilityJump::run(const FeasibilityJumpParams& params) {
     int block_size = 256;
     int grid_rows = (prob.num_rows + block_size - 1) / block_size;
-    int t1= getTime();
+    double t1= getTime();
     for (int r = 0; r < params.max_restarts; ++r) {
         initialize();
 

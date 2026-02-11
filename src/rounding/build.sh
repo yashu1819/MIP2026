@@ -69,10 +69,10 @@ nvcc \
   -lCoinUtils -lClp -lOsiClp -lOsi \
  -lcuopt \
     -Xlinker -rpath,"$LIBCUOPT_LIB_DIR" \
-  -o fj_solver
+  -o nb_solver
 
 SOLVER="./nb_solver"
-INSTANCE_DIR="../test_set/instances"
+INSTANCE_DIR="../../test_set/instances"
 
 # Loop from 1 to 50
 echo "[4/5] Running Instances..."
