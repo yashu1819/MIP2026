@@ -6,7 +6,7 @@ BIN="mip_lp_solver"
 # -----------------------------------------
 # 1. Find cuOpt header
 # -----------------------------------------
-echo "[1/4] Searching for cuOpt header (cuopt_c.h)..."
+echo "[1/5] Searching for cuOpt header (cuopt_c.h)..."
 
 HEADER_FILE=$(find / -name "cuopt_c.h" -path "*/linear_programming/*" 2>/dev/null | head -n 1)
 
@@ -24,7 +24,7 @@ echo "Found cuOpt include path: $INCLUDE_PATH"
 # -----------------------------------------
 # 2. Find cuOpt library
 # -----------------------------------------
-echo "[2/4] Searching for libcuopt.so..."
+echo "[2/5] Searching for libcuopt.so..."
 
 LIB_FILE=$(find / -name "libcuopt.so" 2>/dev/null | head -n 1)
 
@@ -45,7 +45,7 @@ export LD_LIBRARY_PATH=$LIBCUOPT_LIB_DIR:$LD_LIBRARY_PATH
 # -----------------------------------------
 # 4. Compile
 # -----------------------------------------
-echo "[3/4] Compiling..."
+echo "[3/5] Compiling..."
 
 #g++ -std=c++17 -O0 \
 #    -I"$INCLUDE_PATH" \
@@ -56,34 +56,39 @@ echo "[3/4] Compiling..."
 #    -Wl,-rpath,"$LIBCUOPT_LIB_DIR" \
 #    -o mip_lp_solver
 
+
+# neighbourhood_rounding.cpp \
+
 nvcc \
   -std=c++17 \
   -O3 -g -G \
 -I"$INCLUDE_PATH" \
     -L"$LIBCUOPT_LIB_DIR" \
-  main.cpp  mip_problem.cpp feasibility_jump.cu lp_relaxation.cpp \
+  main.cpp  mip_problem.cpp \
+  neighbourhood_rounding.cu lp_relaxation.cpp \
   -lCoinUtils -lClp -lOsiClp -lOsi \
  -lcuopt \
     -Xlinker -rpath,"$LIBCUOPT_LIB_DIR" \
   -o fj_solver
 
-SOLVER="./fj_solver"
+SOLVER="./nb_solver"
 INSTANCE_DIR="../test_set/instances"
 
 # Loop from 1 to 50
+echo "[4/5] Running Instances..."
 for i in $(seq -f "%02g" 1 50)
 do
-   # echo "--------------------------------------------------"
-#    echo "Running Instance: instance_$i.mps"
+  echo "--------------------------------------------------"
+  echo "Running Instance: instance_$i.mps"
     
     # Execute the command
- #   $SOLVER $INSTANCE_DIR/instance_$i.mps
+  $SOLVER $INSTANCE_DIR/instance_$i.mps
     
-    # Optional: Check if the solver exited successfully
-   # if [ $? -ne 0 ]; then
-    #    echo "Error: Solver failed on instance_$i.mps"
-   # fi
+   # Optional: Check if the solver exited successfully
+  if [ $? -ne 0 ]; then
+     echo "Error: Solver failed on instance_$i.mps"
+  fi
 done
 
-echo "[4/4] Build successful"
+echo "[5/5] Build successful"
 #echo "Binary: ./mip_lp_solver"
