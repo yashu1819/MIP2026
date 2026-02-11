@@ -3,8 +3,8 @@
 
 #include "lp_relaxation.h"
 #include "mip_problem.h"
+#include "solution.h"
 #include <vector>
-#include <random>
 #include <cuda_runtime.h>
 
 struct FeasibilityPumpParams {
@@ -14,36 +14,33 @@ struct FeasibilityPumpParams {
     double step_size = 0.01;
 };
 
-struct FPSolution {
-    bool feasible;
-    std::vector<double> x;
-};
-
 class FeasibilityPump {
 public:
     FeasibilityPump(const MIPProblem& p);
     ~FeasibilityPump();
 
-    FPSolution run(const FeasibilityPumpParams& params);
+    Solution run(const FeasibilityPumpParams& params);
 
 private:
     void solve_lp();
     void round_x();
-    bool check_feasibility();
+    bool check_feasibility(double constr_tol);
 
 private:
     const MIPProblem& prob;
 
-    std::vector<double> x;        // current integer point
-    std::vector<double> x_lp;     // LP solution
+    std::vector<double> x;
+    std::vector<double> x_lp;
     std::vector<double> residuals;
 
-    // --- Device memory ---
-    double *d_x, *d_residuals, *d_b;
-    int *d_csr_row_ptr, *d_csr_col_idx;
-    double *d_csr_val;
+    // Device memory
+    double *d_x = nullptr;
+    double *d_residuals = nullptr;
+    double *d_b = nullptr;
 
-    uint8_t *d_vartype;
+    int *d_csr_row_ptr = nullptr;
+    int *d_csr_col_idx = nullptr;
+    double *d_csr_val = nullptr;
 };
 
 #endif

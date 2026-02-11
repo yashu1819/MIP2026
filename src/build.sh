@@ -56,16 +56,16 @@ echo "[3/4] Compiling..."
 #    -Wl,-rpath,"$LIBCUOPT_LIB_DIR" \
 #    -o mip_lp_solver
 
-nvcc \
+nvcc -arch=sm_80 \
   -std=c++17 \
   -O3 -g -G \
 -I"$INCLUDE_PATH" \
     -L"$LIBCUOPT_LIB_DIR" \
-  main.cpp  mip_problem.cpp feasibility_jump.cu lp_relaxation.cpp \
+  main.cpp  mip_problem.cpp feasibility_pump.cu lp_relaxation.cpp \
   -lCoinUtils -lClp -lOsiClp -lOsi \
  -lcuopt \
     -Xlinker -rpath,"$LIBCUOPT_LIB_DIR" \
-  -o fj_solver
+  -o fp_solver
 
 SOLVER="./fj_solver"
 INSTANCE_DIR="../test_set/instances"
@@ -86,5 +86,5 @@ do
 done
 
 echo "[4/4] Build successful"
-#echo "Binary: ./mip_lp_solver"
+echo "Binary: ./fp_solver"
 

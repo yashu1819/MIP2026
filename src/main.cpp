@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
 
     double t2= getTime();
     std::cout<<"Time taken = "<<t2-t1<<"\n";
-    writeToFile("../Benchmark/FJresults.csv", argv[1], t2-t1, objVal, prob.check_feasible(sol.x));
+   // writeToFile("../Benchmark/FJresults.csv", argv[1], t2-t1, objVal, prob.check_feasible(sol.x));
     return 0;
 }
 
