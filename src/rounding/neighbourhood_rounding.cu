@@ -3,12 +3,13 @@
 #include <limits>
 
 #include "mip_problem.h"
+#include "neighbourhood_rounding.h"
 #include "solution.h"
 #include <vector>
 #include <algorithm>
 
 
-__global__ void neighborhood_rounding_kernel(
+__global__ void neighbourhood_rounding_kernel(
     int num_rows,
     int num_cols,
 
@@ -20,6 +21,7 @@ __global__ void neighborhood_rounding_kernel(
     const double* b,
 
     double* candidates,          // [K][num_cols]
+    int* free_mask,
     double* violation_scores,    // [K]
     double eps_base
 ) {
@@ -36,13 +38,18 @@ __global__ void neighborhood_rounding_kernel(
         if (vartype[i] == 0) { // continuous
             candidates[k * num_cols + i] = xi;
         } else {
-            if (fabs(xi - ri) <= eps) {
-                // FIX variable
-                candidates[k * num_cols + i] = ri;
-            } else {
-                // FREE variable → nearest integer
-                candidates[k * num_cols + i] = ri;
-            }
+            // if (fabs(xi - ri) <= eps) {
+            //     // FIX variable
+            //     candidates[k * num_cols + i] = ri;
+            // } else {
+            //     // FREE variable → nearest integer
+            //     candidates[k * num_cols + i] = ri;
+            // }
+            bool is_free = (fabs(xi - ri) > eps);
+
+            candidates[k * num_cols + i] = ri;
+            free_mask[k * num_cols + i] = is_free ? 1 : 0;
+
         }
     }
 
@@ -64,7 +71,7 @@ __global__ void neighborhood_rounding_kernel(
 }
 
 
-Solution run_gpu_neighborhood_rounding(
+Solution run_gpu_neighbourhood_rounding(
     const MIPProblem& mip,
     const std::vector<double>& x_lp,
     int K = 1024
@@ -76,7 +83,7 @@ Solution run_gpu_neighborhood_rounding(
 
     // --- Allocate device memory ---
     double *d_xlp, *d_b, *d_val, *d_candidates, *d_scores;
-    int *d_vartype, *d_rowptr, *d_colidx;
+    int *d_vartype, *d_rowptr, *d_colidx, *d_free_mask;
 
     cudaMalloc(&d_xlp, n * sizeof(double));
     cudaMalloc(&d_vartype, n * sizeof(int));
@@ -87,6 +94,7 @@ Solution run_gpu_neighborhood_rounding(
 
     cudaMalloc(&d_candidates, K * n * sizeof(double));
     cudaMalloc(&d_scores, K * sizeof(double));
+    cudaMalloc(&d_free_mask, K * n * sizeof(int));
 
     // --- Copy data ---
     cudaMemcpy(d_xlp, x_lp.data(), n * sizeof(double), cudaMemcpyHostToDevice);
@@ -105,7 +113,7 @@ Solution run_gpu_neighborhood_rounding(
     int threads = 256;
     int blocks = (K + threads - 1) / threads;
 
-    neighborhood_rounding_kernel<<<blocks, threads>>>(
+    neighbourhood_rounding_kernel<<<blocks, threads>>>(
         m, n,
         d_xlp,
         d_vartype,
@@ -114,31 +122,73 @@ Solution run_gpu_neighborhood_rounding(
         d_val,
         d_b,
         d_candidates,
+        d_free_mask,
         d_scores,
         1e-3
     );
 
     // --- Copy results back ---
     std::vector<double> scores(K);
+    std::vector<int> free_mask(K * n);
     std::vector<double> candidates(K * n);
 
     cudaMemcpy(scores.data(), d_scores, K * sizeof(double), cudaMemcpyDeviceToHost);
     cudaMemcpy(candidates.data(), d_candidates, K * n * sizeof(double), cudaMemcpyDeviceToHost);
+    cudaMemcpy(free_mask.data(), d_free_mask, K * n * sizeof(int), cudaMemcpyDeviceToHost);
 
-    // --- Select best candidate ---
-    int best_k = std::min_element(scores.begin(), scores.end()) - scores.begin();
+    std::vector<int> locks_up, locks_down;
+    compute_locks(mip, locks_up, locks_down);
 
-    best.x.assign(
-        candidates.begin() + best_k * n,
-        candidates.begin() + (best_k + 1) * n
-    );
+    // // --- Select best candidate ---
+    // int best_k = std::min_element(scores.begin(), scores.end()) - scores.begin();
 
-    best.feasible = mip.check_feasible(best.x);
-    if (best.feasible) {
-        best.obj_value = mip.obj_offset;
+    // best.x.assign(
+    //     candidates.begin() + best_k * n,
+    //     candidates.begin() + (best_k + 1) * n
+    // );
+
+    // best.feasible = mip.check_feasible(best.x);
+    // if (best.feasible) {
+    //     best.obj_value = mip.obj_offset;
+    //     for (int i = 0; i < n; i++)
+    //         best.obj_value += mip.c[i] * best.x[i];
+    // }
+
+    // Repair Loop 
+    // Try repairing best few candidates
+    for (int trial = 0; trial < std::min(K, 5); trial++) {
+
+        int idx = trial; // try top few if you want to sort later
+
+        std::vector<double> x(
+            candidates.begin() + idx * n,
+            candidates.begin() + (idx + 1) * n
+        );
+
+        std::vector<bool> is_free(n);
         for (int i = 0; i < n; i++)
-            best.obj_value += mip.c[i] * best.x[i];
+            is_free[i] = (free_mask[idx * n + i] == 1);
+
+        bool feasible = repair_solution(
+            mip, x,
+            is_free,
+            locks_up,
+            locks_down,
+            5000
+        );
+
+        if (feasible) {
+            best.x = x;
+            best.feasible = true;
+
+            best.obj_value = mip.obj_offset;
+            for (int i = 0; i < n; i++)
+                best.obj_value += mip.c[i] * x[i];
+
+            break;
+        }
     }
+
 
     // --- Cleanup ---
     cudaFree(d_xlp);
@@ -149,6 +199,7 @@ Solution run_gpu_neighborhood_rounding(
     cudaFree(d_b);
     cudaFree(d_candidates);
     cudaFree(d_scores);
+    cudaFree(d_free_mask);
 
     return best;
 }

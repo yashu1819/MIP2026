@@ -65,7 +65,9 @@ nvcc \
 -I"$INCLUDE_PATH" \
     -L"$LIBCUOPT_LIB_DIR" \
   main.cpp  mip_problem.cpp \
-  neighbourhood_rounding.cu lp_relaxation.cpp \
+  neighbourhood_rounding.cu \
+  neighbourhood_rounding.cpp \
+  lp_relaxation.cpp \
   -lCoinUtils -lClp -lOsiClp -lOsi \
  -lcuopt \
     -Xlinker -rpath,"$LIBCUOPT_LIB_DIR" \

@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
     auto t2 = std::chrono::high_resolution_clock::now();
 
     Solution sol =
-        run_gpu_neighborhood_rounding(mip, lp.x, 1024);
+        run_gpu_neighbourhood_rounding(mip, lp.x, 1024);
 
     auto t3 = std::chrono::high_resolution_clock::now();
 
