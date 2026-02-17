@@ -52,6 +52,16 @@ struct LPRelaxation {
     // Solve LP relaxation
     // Returns true if a feasible solution is found
     bool solve();
+
+    bool check_feasible(
+      const std::vector<double>& x,
+      double constr_tol = 1e-6,
+      double int_tol = 1e-5
+    ) const;
+
+    bool check_feasible_fast(
+        const std::vector<double>& x
+    ) const;
 };
 
 #endif

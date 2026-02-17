@@ -100,3 +100,49 @@ bool LPRelaxation::solve()
     return true;
 }
 
+bool LPRelaxation::check_feasible(
+    const std::vector<double>& x,
+    double constr_tol,
+    double int_tol
+) const {
+    // Dimension check
+    if ((int)x.size() != num_cols) {
+    //    std::cerr << "Feasibility check failed: wrong dimension\n";
+        return false;
+    }
+
+    /* ================= Bounds ================= */
+
+    for (int j = 0; j < num_cols; ++j) {
+        if (x[j] < lb[j] - constr_tol || x[j] > ub[j] + constr_tol) {
+      //      std::cerr << "Bound violation at var " << j << "\n";
+          return false;
+        }
+    }
+
+    /* ================= Constraints: Ax <= b ================= */
+
+    // Using CSR: row-wise accumulation
+    for (int i = 0; i < num_rows; ++i) {
+        double activity = 0.0;
+        for (int p = csr_row_ptr[i]; p < csr_row_ptr[i + 1]; ++p) {
+            activity += csr_val[p] * x[csr_col_idx[p]];
+        }
+
+        if (activity > b[i] + constr_tol) {
+           // std::cerr << "Constraint violation at row " << i
+             //         << " : activity = " << activity
+               //       << " , rhs = " << b[i] << "\n";
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool LPRelaxation::check_feasible_fast(
+    const std::vector<double>& x
+) const {
+    return LPRelaxation::check_feasible(x, 1e-7, 1e-7);
+}
+

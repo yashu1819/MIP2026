@@ -42,7 +42,7 @@ bool repair_solution(
     const std::vector<bool>& is_free,
     const std::vector<int>& locks_up,
     const std::vector<int>& locks_down,
-    int max_iter = 5000
+    int max_iter = 10000
 )
 {
     int n = mip.num_cols;

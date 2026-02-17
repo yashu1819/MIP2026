@@ -58,6 +58,7 @@ echo "[3/5] Compiling..."
 
 
 # neighbourhood_rounding.cpp \
+# neighbourhood_rounding.cu \
 
 nvcc \
   -std=c++17 \
@@ -65,8 +66,7 @@ nvcc \
 -I"$INCLUDE_PATH" \
     -L"$LIBCUOPT_LIB_DIR" \
   main.cpp  mip_problem.cpp \
-  neighbourhood_rounding.cu \
-  neighbourhood_rounding.cpp \
+  chebyshev_center.cpp \
   lp_relaxation.cpp \
   -lCoinUtils -lClp -lOsiClp -lOsi \
  -lcuopt \
@@ -78,7 +78,7 @@ INSTANCE_DIR="../../test_set/instances"
 
 # Loop from 1 to 50
 echo "[4/5] Running Instances..."
-for i in $(seq -f "%02g" 1 50)
+for i in $(seq -f "%02g" 1 1)
 do
   echo "--------------------------------------------------"
   echo "Running Instance: instance_$i.mps"
