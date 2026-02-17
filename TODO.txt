@@ -1,6 +1,6 @@
 Meeting 11Feb2026 : 
 - subsets of variables based on coeff matrix some patterns in it
-- centre of polyhedron finding then rounding ->chebychev constraints
+- centre of polyhedron finding then rounding ->chebychev constraints || Analytic centre can also be explored, told to be more secure.
 - cgdb debugger -> learn its basic functions
 
 
