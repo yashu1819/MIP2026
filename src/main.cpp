@@ -20,7 +20,7 @@ void writeToFile(std::string file, char* argv, double time, double objVal, bool 
         // 3. Write the row: Name, Objective Value, Time
         // Fixed precision for the double values ensures clean CSV formatting
         csvFile << instanceName << "," 
-		<<std::fixed << std::setprecision(1) << feas << ","
+<<std::fixed << std::setprecision(1) << feas << ","
                 << std::fixed << std::setprecision(6) << objVal << "," 
                 << std::fixed << std::setprecision(4) << time << "\n";
         
@@ -39,7 +39,22 @@ int main(int argc, char** argv) {
     MIPProblem prob;
     prob.load_from_mps(argv[1]);
     prob.finalize();
+    std::cout << "\n=== Problem dimensions ===\n";
+    std::cout << "  rows       = " << prob.num_rows << "\n";
+    std::cout << "  cols       = " << prob.num_cols << "\n";
+    std::cout << "  nnz        = " << prob.csr_val.size() << "\n";
+    std::cout << "  c.size()   = " << prob.c.size() << "\n";
+    std::cout << "  b.size()   = " << prob.b.size() << "\n";
+    std::cout << "  lb.size()  = " << prob.lb.size() << "\n";
+    std::cout << "  ub.size()  = " << prob.ub.size() << "\n";
+    std::cout << "  vartype.size() = " << prob.vartype.size() << "\n";
+    std::cout << "  row_ptr.size() = " << prob.csr_row_ptr.size() << "\n\n";
 
+    // Basic consistency check
+    if (prob.num_cols <= 0 || prob.c.size() != static_cast<size_t>(prob.num_cols)) {
+        std::cerr << "ERROR: Invalid problem dimensions after loading/finalize\n";
+        return 1;
+    }
     FeasibilityPump fj(prob);
 
     FeasibilityPumpParams params;
@@ -49,11 +64,24 @@ int main(int argc, char** argv) {
 //    std::cout<<"Solution :\n";
   //  for (auto var: sol.x)std::cout<<var<<" ";
 //    std::cout<<"\n";
+
     double objVal=0;
-    for (int i=0; i<prob.num_cols; i++)objVal+=prob.c[i]*sol.x[i];
-    objVal-=prob.obj_offset;
-    std::cout<<"Objective value = "<<objVal<<"\n";
-    if (prob.check_feasible(sol.x)) {
+
+    // ────────────── Safety: only compute obj if solution is valid ──────────────
+    if (!sol.x.empty() && sol.x.size() == static_cast<size_t>(prob.num_cols)) {
+        for (int i=0; i<prob.num_cols; i++) {
+            objVal += prob.c[i] * sol.x[i];
+        }
+        objVal -= prob.obj_offset;
+        std::cout << "Objective value = " << objVal << "\n";
+    } else {
+        std::cout << "Cannot compute objective: invalid or empty solution (size=" 
+                  << sol.x.size() << ", expected=" << prob.num_cols << ")\n";
+    }
+
+    // ────────────── Safety: only call check_feasible if vector is valid ──────────────
+    if (!sol.x.empty() && sol.x.size() == static_cast<size_t>(prob.num_cols) &&
+        prob.check_feasible(sol.x)) {
         std::cout << "Feasible solution found\n";
     } else {
         std::cout << "No feasible solution found\n";
@@ -64,4 +92,3 @@ int main(int argc, char** argv) {
    // writeToFile("../Benchmark/FJresults.csv", argv[1], t2-t1, objVal, prob.check_feasible(sol.x));
     return 0;
 }
-
