@@ -2,6 +2,7 @@
 #define CHEBYSHEV_CENTER_H
 
 #include "mip_problem.h"
+#include<utility>
 #include <vector>
 
 struct ChebyshevResult {
@@ -10,6 +11,6 @@ struct ChebyshevResult {
     bool feasible = false;
 };
 
-ChebyshevResult compute_chebyshev_center(const MIPProblem& mip);
+std::pair<ChebyshevResult, MIPProblem> compute_chebyshev_center(const MIPProblem& mip);
 
 #endif

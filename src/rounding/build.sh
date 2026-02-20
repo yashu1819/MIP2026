@@ -78,19 +78,20 @@ INSTANCE_DIR="../../test_set/instances"
 
 # Loop from 1 to 50
 echo "[4/5] Running Instances..."
-for i in $(seq -f "%02g" 1 1)
-do
-  echo "--------------------------------------------------"
-  echo "Running Instance: instance_$i.mps"
+
+# for i in $(seq -f "%02g" 1 1)
+# do
+#   echo "--------------------------------------------------"
+#   echo "Running Instance: instance_$i.mps"
     
-    # Execute the command
-  $SOLVER $INSTANCE_DIR/instance_$i.mps
+#     # Execute the command
+#   $SOLVER $INSTANCE_DIR/instance_$i.mps
     
-   # Optional: Check if the solver exited successfully
-  if [ $? -ne 0 ]; then
-     echo "Error: Solver failed on instance_$i.mps"
-  fi
-done
+#    # Optional: Check if the solver exited successfully
+#   if [ $? -ne 0 ]; then
+#      echo "Error: Solver failed on instance_$i.mps"
+#   fi
+# done
 
 echo "[5/5] Build successful"
 #echo "Binary: ./mip_lp_solver"

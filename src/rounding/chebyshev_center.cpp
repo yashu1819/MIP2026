@@ -3,44 +3,45 @@
 #include <cmath>
 #include <iostream>
 
-ChebyshevResult compute_chebyshev_center(const MIPProblem& mip)
+
+std::pair<ChebyshevResult, MIPProblem> compute_chebyshev_center(const MIPProblem& mip)
 {
     ChebyshevResult result;
 
     int n = mip.num_cols;
     int m = mip.num_rows;
 
-    // --------------------------------------------
-    // 1️⃣ Build new MIPProblem for Chebyshev LP
-    // --------------------------------------------
     MIPProblem cheb;
 
+    // Only original rows
     cheb.num_rows = m;
-    cheb.num_cols = n + 1; // add r variable
+    cheb.num_cols = n + 1; // extra r
 
-    // Objective: minimize -r
+    // Objective: maximize r  (minimize -r)
     cheb.c.assign(n + 1, 0.0);
-    cheb.c[n] = -1.0;  // minimize -r
+    cheb.c[n] = -1.0;
 
     cheb.obj_offset = 0.0;
 
-    // Bounds
+    // Keep original bounds
     cheb.lb = mip.lb;
     cheb.ub = mip.ub;
 
-    cheb.lb.push_back(0.0);                 // r >= 0
-    cheb.ub.push_back(1e20);                // r unbounded above
+    // Add r bounds
+    cheb.lb.push_back(0.0);      // r >= 0
+    cheb.ub.push_back(1e20);
 
-    // Variable types (all continuous)
-    cheb.vartype.assign(n + 1, VarType::CONTINUOUS); 
+    cheb.vartype.assign(n + 1, VarType::CONTINUOUS);
 
-    // RHS
+    // Copy RHS
     cheb.b = mip.b;
 
-    // --------------------------------------------
-    // 2️⃣ Build new matrix with extra r column
-    // --------------------------------------------
+    // Clear COO
+    cheb.coo_row.clear();
+    cheb.coo_col.clear();
+    cheb.coo_val.clear();
 
+    // Build matrix
     for (int i = 0; i < m; ++i)
     {
         double norm_ai = 0.0;
@@ -48,45 +49,39 @@ ChebyshevResult compute_chebyshev_center(const MIPProblem& mip)
         int start = mip.csr_row_ptr[i];
         int end   = mip.csr_row_ptr[i + 1];
 
-        for (int p = start; p < end; ++p) {
+        for (int p = start; p < end; ++p)
+        {
             double val = mip.csr_val[p];
             norm_ai += val * val;
+
+            cheb.coo_row.push_back(i);
+            cheb.coo_col.push_back(mip.csr_col_idx[p]);
+            cheb.coo_val.push_back(val);
         }
 
         norm_ai = std::sqrt(norm_ai);
 
-        // copy original row
-        for (int p = start; p < end; ++p) {
+        if (norm_ai > 0.0)
+        {
             cheb.coo_row.push_back(i);
-            cheb.coo_col.push_back(mip.csr_col_idx[p]);
-            cheb.coo_val.push_back(mip.csr_val[p]);
-        }
-
-        // add coefficient for r
-        if (norm_ai > 0.0) {
-            cheb.coo_row.push_back(i);
-            cheb.coo_col.push_back(n);   // r index
+            cheb.coo_col.push_back(n); // r
             cheb.coo_val.push_back(norm_ai);
         }
     }
 
-    // Build CSR/CSC
     cheb.finalize();
 
-    // --------------------------------------------
-    // 3️⃣ Solve LP
-    // --------------------------------------------
     LPRelaxation lp(cheb);
 
-    bool ok = lp.solve();
-    if (!ok) {
+    if (!lp.solve())
+    {
         std::cerr << "Chebyshev LP failed.\n";
-        return result;
+        return std::make_pair(result, cheb);
     }
 
     result.x_center.assign(lp.x.begin(), lp.x.begin() + n);
     result.radius = lp.x[n];
     result.feasible = true;
 
-    return result;
+    return std::make_pair(result, cheb);
 }
