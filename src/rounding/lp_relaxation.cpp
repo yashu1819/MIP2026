@@ -1,6 +1,7 @@
 #include "lp_relaxation.h"
 
 #include <cuopt/linear_programming/cuopt_c.h>
+#include<iostream>
 #include <stdexcept>
 #include <limits>
 
@@ -73,7 +74,7 @@ bool LPRelaxation::solve()
     cuOptSetIntegerParameter(settings, CUOPT_LOG_TO_CONSOLE, 0);
 
     // PDLP solver
-    cuOptSetIntegerParameter(settings, CUOPT_METHOD,CUOPT_METHOD_PDLP);
+    cuOptSetIntegerParameter(settings, CUOPT_METHOD, CUOPT_METHOD_DUAL_SIMPLEX);
     cuOptSetFloatParameter(settings, CUOPT_ABSOLUTE_PRIMAL_TOLERANCE, 1e-6);
     // setting time limit if needed
     // status = cuOptSetFloatParameter(settings, CUOPT_TIME_LIMIT, 50.0f);
@@ -90,8 +91,7 @@ bool LPRelaxation::solve()
     std::vector<cuopt_float_t> sol(num_cols);
     status = cuOptGetPrimalSolution(solution, sol.data());
     
-    for (int j = 0; j < num_cols; ++j)
-        x[j] = sol[j];
+    for (int j = 0; j < num_cols; ++j) x[j] = sol[j];
 
     cuOptDestroyProblem(&problem);
     cuOptDestroySolverSettings(&settings);
@@ -115,7 +115,7 @@ bool LPRelaxation::check_feasible(
 
     for (int j = 0; j < num_cols; ++j) {
         if (x[j] < lb[j] - constr_tol || x[j] > ub[j] + constr_tol) {
-      //      std::cerr << "Bound violation at var " << j << "\n";
+        // std::cerr << "Bound violation at var " << j << "\n";
           return false;
         }
     }
@@ -130,9 +130,9 @@ bool LPRelaxation::check_feasible(
         }
 
         if (activity > b[i] + constr_tol) {
-           // std::cerr << "Constraint violation at row " << i
-             //         << " : activity = " << activity
-               //       << " , rhs = " << b[i] << "\n";
+        //    std::cerr << "Constraint violation at row " << i
+        //              << " : activity = " << activity
+        //              << " , rhs = " << b[i] << "\n";
             return false;
         }
     }
@@ -145,4 +145,3 @@ bool LPRelaxation::check_feasible_fast(
 ) const {
     return LPRelaxation::check_feasible(x, 1e-7, 1e-7);
 }
-
