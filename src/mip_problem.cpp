@@ -250,3 +250,40 @@ double getTime() {
     // Convert to seconds as a double
     return std::chrono::duration<double>(duration).count();
 }
+
+std::string MIPProblem::classify() {
+
+    bool hasBinary = false;
+    bool hasInteger = false;
+    bool hasContinuous = false;
+
+    for (VarType vt : vartype) {
+        if (vt == VarType::BINARY)
+            hasBinary = true;
+        else if (vt == VarType::INTEGER)
+            hasInteger = true;
+        else if (vt == VarType::CONTINUOUS)
+            hasContinuous = true;
+    }
+
+    // Rules:
+    // Pure BP  -> only binary
+    // Pure IP  -> at least 1 integer, no continuous (binary allowed)
+    // MBP      -> binary + continuous, no integer
+    // MILP     -> integer + continuous
+
+    if (hasInteger) {
+        if (hasContinuous)
+            return "MILP";
+        else
+            return "Pure IP";
+    }
+
+    if (hasBinary && hasContinuous)
+        return "MBP";
+
+    if (hasBinary && !hasContinuous)
+        return "Pure BP";
+
+    return "LP";
+}

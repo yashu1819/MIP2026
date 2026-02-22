@@ -1,0 +1,4 @@
+MBP: 3 out of 19 had 1
+MILP: 1 out of 11 had 1
+Pure BP: 11 out of 13 had 1
+Pure IP: 2 out of 7 had 1

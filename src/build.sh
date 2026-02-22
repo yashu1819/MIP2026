@@ -66,7 +66,6 @@ nvcc \
  -lcuopt \
     -Xlinker -rpath,"$LIBCUOPT_LIB_DIR" \
   -o fj_solver
-
 SOLVER="./fj_solver"
 INSTANCE_DIR="../test_set/instances"
 

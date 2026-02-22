@@ -56,7 +56,7 @@ bool check_feasible(
     double constr_tol = 1e-6,
     double int_tol = 1e-5
 ) const;
-
+std::string classify();
 private:
     // helpers
     void ensure_col(int col);
