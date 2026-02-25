@@ -91,6 +91,7 @@ FPResult run_feasibility_pump_cuda(
             for (size_t j = 0; j < mip.c.size(); ++j) {
                 res.objective_value += mip.c[j] * x_rounded[j];
             }
+	    res.objective_value-=mip.obj_offset;
             res.status_msg = "Feasible integer solution found";
             printf("→ SUCCESS at iteration %d  (frac dist = %.2e)\n", iter, frac_dist);
             res.time_used_sec = getTime() - start_time;
@@ -118,6 +119,7 @@ FPResult run_feasibility_pump_cuda(
                 for (size_t j = 0; j < mip.c.size(); ++j) {
                     res.objective_value += mip.c[j] * forced[j];
                 }
+		res.objective_value-=mip.obj_offset;
                 res.status_msg = "Feasible solution found via forced rounding";
                 printf("→ Forced rounding SUCCESS at iter %d\n", iter);
                 res.time_used_sec = getTime() - start_time;
