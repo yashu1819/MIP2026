@@ -61,11 +61,11 @@ nvcc -arch=sm_80 \
   -O3 -g -G \
 -I"$INCLUDE_PATH" \
     -L"$LIBCUOPT_LIB_DIR" \
-  main.cpp  mip_problem.cpp feasibility_pump.cu lp_relaxation.cpp \
+  mn.cpp  mip_problem.cpp fp.cu lp_relaxation.cpp \
   -lCoinUtils -lClp -lOsiClp -lOsi \
  -lcuopt \
     -Xlinker -rpath,"$LIBCUOPT_LIB_DIR" \
-  -o fp_solver
+  -o fp_s
 
 SOLVER="./fj_solver"
 INSTANCE_DIR="../test_set/instances"
