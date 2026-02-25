@@ -59,14 +59,18 @@ echo "[3/5] Compiling..."
 
 # neighbourhood_rounding.cpp \
 # neighbourhood_rounding.cu \
+# chebyshev_center.cpp \
 
 nvcc \
   -std=c++17 \
   -O3 -g -G \
 -I"$INCLUDE_PATH" \
     -L"$LIBCUOPT_LIB_DIR" \
-  main.cpp  mip_problem.cpp \
+  main.cpp\
+  mip_problem.cpp \
   chebyshev_center.cpp \
+  neighbourhood_rounding.cpp \
+  neighbourhood_rounding.cu \
   lp_relaxation.cpp \
   -lCoinUtils -lClp -lOsiClp -lOsi \
  -lcuopt \
