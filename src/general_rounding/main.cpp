@@ -235,7 +235,7 @@ int main(int argc, char** argv)
 
             double before_score = compute_violation_score(mip,activity);
 
-            std::cout<<"Initial violation score = " <<before_score * 0.001<<"\n";
+            std::cout<<"Initial violation score = " <<before_score<<"\n";
 
             //-------------------------------------------------
             // Run repair
@@ -251,7 +251,7 @@ int main(int argc, char** argv)
 
             double after_score = compute_violation_score(mip,activity);
 
-            std::cout<<"After repair score = " <<after_score * 0.001<<"\n";
+            std::cout<<"After repair score = " <<after_score<<"\n";
 
             //-------------------------------------------------
             // Improvement statistics
