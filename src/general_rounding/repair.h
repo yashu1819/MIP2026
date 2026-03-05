@@ -7,6 +7,7 @@
 bool repair_solution(
     const MIPProblem& mip,
     std::vector<double>& x,
+    const std::vector<bool>& is_fixed,
     int max_iter
 );
 

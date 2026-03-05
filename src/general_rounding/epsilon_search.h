@@ -17,6 +17,8 @@ struct EpsilonCandidate
     double epsilon;
     double score;
     std::vector<double> x;
+
+    std::vector<bool> is_fixed; // variable status
 };
 
 std::vector<EpsilonCandidate> epsilon_neighborhood_search(

@@ -128,11 +128,19 @@ int main(int argc, char** argv)
         // Try repair
         //-------------------------------------------------
 
-        for(int i=0;i<K;i++)
+        int limit = std::min(K, (int)candidates.size());
+        for(int i=0;i<limit;i++)
         {
             std::vector<double> x = candidates[i].x;
+            std::vector<bool> is_fixed = candidates[i].is_fixed;
 
             std::cout<<"\nRepairing candidate "<<i<<"\n";
+
+            int fixed_count = 0;
+            for(bool f : is_fixed) if(f) fixed_count++;
+
+            std::cout << "Fixed variables = " << fixed_count
+                    << " / " << mip.num_cols << "\n";
 
             //-------------------------------------------------
             // Initial score
@@ -151,7 +159,7 @@ int main(int argc, char** argv)
             // Run repair
             //-------------------------------------------------
 
-            bool ok = repair_solution(mip,x,500);
+            bool ok = repair_solution(mip,x,is_fixed,500);
 
             //-------------------------------------------------
             // Score after repair

@@ -95,7 +95,7 @@ echo "[4/5] Running Instances..."
 
 SOLVER="./$BIN"
 
-for i in $(seq -f "%02g" 1 5)
+for i in $(seq -f "%02g" 1 1)
 do
   echo "--------------------------------------------------"
   echo "Running Instance: instance_$i.mps"
