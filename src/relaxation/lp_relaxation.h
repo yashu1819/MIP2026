@@ -1,7 +1,8 @@
 #ifndef LP_RELAXATION_H
 #define LP_RELAXATION_H
 
-#include "mip_problem.h"
+// #include "mip_problem.h"
+#include "../Definition/mip_problem.h"
 #include <vector>
 #include <limits>
 
