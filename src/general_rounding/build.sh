@@ -92,6 +92,7 @@ echo "Compilation finished."
 # 5. Run Test Instances
 # -------------------------------------------------
 echo "[4/5] Running Instances..."
+# echo "File Name,Total Variables,Problem Type,Best Candidate,Final Score,Result,Time Taken" > results.csv
 
 SOLVER="./$BIN"
 
@@ -101,6 +102,19 @@ do
   echo "Running Instance: instance_$i.mps"
 
   $SOLVER $INSTANCE_DIR/instance_$i.mps
+
+  # csv_line=$(echo "$output" | grep CSV_RESULT | cut -d',' -f2-)
+  # echo "$csv_line" >> results.csv
+
+  # output=$($SOLVER $INSTANCE_DIR/instance_$i.mps)
+
+  # echo "$output"
+
+  # csv_line=$(echo "$output" | grep CSV_RESULT | cut -d',' -f2-)
+
+  # if [ ! -z "$csv_line" ]; then
+  #     echo "$csv_line" >> results.csv
+  # fi
 
   if [ $? -ne 0 ]; then
       echo "Error: Solver failed on instance_$i.mps"
