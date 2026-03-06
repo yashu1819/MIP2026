@@ -11,4 +11,11 @@ bool repair_solution(
     int max_iter
 );
 
+bool repair_solution_improved(
+    const MIPProblem& mip,
+    std::vector<double>& x,
+    const std::vector<bool>& is_fixed,
+    int max_iter
+);
+
 #endif

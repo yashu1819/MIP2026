@@ -67,7 +67,7 @@ export LD_LIBRARY_PATH=$LIBCUOPT_LIB_DIR:$LD_LIBRARY_PATH
 # -------------------------------------------------
 echo "[3/5] Compiling General Rounding Heuristic..."
 
-# $SRC_MAIN \
+# $SRC_MAIN \ $SRC_RESULTS_FILE
 
 nvcc \
   -std=c++17 \
@@ -95,11 +95,12 @@ echo "Compilation finished."
 # 5. Run Test Instances
 # -------------------------------------------------
 echo "[4/5] Running Instances..."
-echo "File Name,Total Variables,Problem Type,Best Candidate,Final Score,Result,Time Taken,Max Score Improvement" > results2.csv
+
+echo "File Name,Total Variables,Problem Type,Best Candidate,Final Score,Result,Time Taken,Max Score Improvement" > results3.csv
 
 SOLVER="./$BIN"
 
-for i in $(seq -f "%02g" 1 50)
+for i in $(seq -f "%02g" 33 33)
 do
   echo "--------------------------------------------------"
   echo "Running Instance: instance_$i.mps"
@@ -109,6 +110,7 @@ do
   # csv_line=$(echo "$output" | grep CSV_RESULT | cut -d',' -f2-)
   # echo "$csv_line" >> results.csv
 
+
   output=$($SOLVER $INSTANCE_DIR/instance_$i.mps)
 
   echo "$output"
@@ -116,7 +118,7 @@ do
   csv_line=$(echo "$output" | grep CSV_RESULT | cut -d',' -f2-)
 
   if [ ! -z "$csv_line" ]; then
-      echo "$csv_line" >> results2.csv
+      echo "$csv_line" >> results3.csv
   fi
 
   if [ $? -ne 0 ]; then
