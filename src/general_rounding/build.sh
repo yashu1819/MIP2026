@@ -95,7 +95,7 @@ echo "Compilation finished."
 # 5. Run Test Instances
 # -------------------------------------------------
 echo "[4/5] Running Instances..."
-echo "File Name,Total Variables,Problem Type,Best Candidate,Final Score,Result,Time Taken" > results1.csv
+echo "File Name,Total Variables,Problem Type,Best Candidate,Final Score,Result,Time Taken,Max Score Improvement" > results2.csv
 
 SOLVER="./$BIN"
 
@@ -116,7 +116,7 @@ do
   csv_line=$(echo "$output" | grep CSV_RESULT | cut -d',' -f2-)
 
   if [ ! -z "$csv_line" ]; then
-      echo "$csv_line" >> results1.csv
+      echo "$csv_line" >> results2.csv
   fi
 
   if [ $? -ne 0 ]; then

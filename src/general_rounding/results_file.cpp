@@ -238,11 +238,6 @@ int main(int argc, char** argv)
             // Early success threshold
             //-------------------------------------------------
 
-            if(after_score < 1e-3)
-            {
-                std::cout<<"Repair reached near-feasible score (<1e-3)\n";
-            }
-
             //-------------------------------------------------
             // Debug output
             //-------------------------------------------------
@@ -257,7 +252,7 @@ int main(int argc, char** argv)
 
         double end_time = getTime();
         double elapsed = end_time - start_time;
-        int result = (best_score_overall < 1e-3) ? 1 : 0;
+        int result = (best_score_overall < 1e-5) ? 1 : 0;
 
         std::cout<<"\n-------------------------------------\n";
         std::cout<<"Repair statistics\n";
@@ -269,9 +264,9 @@ int main(int argc, char** argv)
         std::cout<<"Max score improvement = "
                 <<max_score_improvement<<"\n";
 
-        bool near_feasible = (best_score_overall < 1e-3);
+        bool near_feasible = (best_score_overall < 1e-5);
 
-        std::cout<<"Near-feasible solution found = "
+        std::cout<<"Solution found = "
                 <<(near_feasible ? "YES" : "NO")<<"\n";
         std::cout<<"-------------------------------------\n";
 
@@ -286,7 +281,8 @@ int main(int argc, char** argv)
                 << best_candidate_index << ","
                 << best_score_overall << ","
                 << result << ","
-                << elapsed
+                << elapsed << ","
+                << max_score_improvement
                 << std::endl;
     }
 
