@@ -13,7 +13,8 @@ double compute_violation_score(
         double slack = activity[i] - mip.b[i];
 
         if(slack > 0)
-            score += slack*slack;
+            // score += slack*slack;
+            score += slack;
     }
 
     return score;

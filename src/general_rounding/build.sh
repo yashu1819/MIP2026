@@ -13,6 +13,7 @@ SRC_SCORE="score.cpp"
 SRC_EPSILON_GENERATOR="epsilon_generator.cpp"
 SRC_EPSILON_SEARCH="epsilon_search.cpp"
 SRC_REPAIR="repair.cpp"
+SRC_RESULTS_FILE="results_file.cpp"
 
 
 SRC_MIP="../Definition/mip_problem.cpp"
@@ -66,12 +67,14 @@ export LD_LIBRARY_PATH=$LIBCUOPT_LIB_DIR:$LD_LIBRARY_PATH
 # -------------------------------------------------
 echo "[3/5] Compiling General Rounding Heuristic..."
 
+# $SRC_MAIN \
+
 nvcc \
   -std=c++17 \
   -O3 -g \
   -I"$INCLUDE_PATH" \
   -L"$LIBCUOPT_LIB_DIR" \
-  $SRC_MAIN \
+  $SRC_RESULTS_FILE \
   $SRC_LOCKS \
   $SRC_LOCKS_ROUNDING \
   $SRC_ACTIVITY \
@@ -92,11 +95,11 @@ echo "Compilation finished."
 # 5. Run Test Instances
 # -------------------------------------------------
 echo "[4/5] Running Instances..."
-# echo "File Name,Total Variables,Problem Type,Best Candidate,Final Score,Result,Time Taken" > results.csv
+echo "File Name,Total Variables,Problem Type,Best Candidate,Final Score,Result,Time Taken" > results1.csv
 
 SOLVER="./$BIN"
 
-for i in $(seq -f "%02g" 1 1)
+for i in $(seq -f "%02g" 1 50)
 do
   echo "--------------------------------------------------"
   echo "Running Instance: instance_$i.mps"
@@ -106,15 +109,15 @@ do
   # csv_line=$(echo "$output" | grep CSV_RESULT | cut -d',' -f2-)
   # echo "$csv_line" >> results.csv
 
-  # output=$($SOLVER $INSTANCE_DIR/instance_$i.mps)
+  output=$($SOLVER $INSTANCE_DIR/instance_$i.mps)
 
-  # echo "$output"
+  echo "$output"
 
-  # csv_line=$(echo "$output" | grep CSV_RESULT | cut -d',' -f2-)
+  csv_line=$(echo "$output" | grep CSV_RESULT | cut -d',' -f2-)
 
-  # if [ ! -z "$csv_line" ]; then
-  #     echo "$csv_line" >> results.csv
-  # fi
+  if [ ! -z "$csv_line" ]; then
+      echo "$csv_line" >> results1.csv
+  fi
 
   if [ $? -ne 0 ]; then
       echo "Error: Solver failed on instance_$i.mps"

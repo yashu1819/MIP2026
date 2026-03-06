@@ -385,7 +385,8 @@ bool repair_solution(
         {
             double viol = act[i] - mip.b[i];
             if(viol > 0)
-                score += viol*viol;
+                // score += viol*viol;
+                score += viol;
         }
 
         return score;
