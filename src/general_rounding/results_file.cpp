@@ -197,7 +197,7 @@ int main(int argc, char** argv)
             //-------------------------------------------------
 
             // bool ok = repair_solution(mip, x, is_fixed, 2000);
-            bool ok = repair_solution_improved(mip, x, is_fixed, 2000);
+            bool ok = repair_solution_improved(mip, x, is_fixed, 5, 2000);
 
             //-------------------------------------------------
             // Score after repair

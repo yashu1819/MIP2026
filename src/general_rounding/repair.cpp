@@ -253,6 +253,7 @@ bool repair_solution_improved(
     const MIPProblem& mip,
     std::vector<double>& x,
     const std::vector<bool>& is_fixed,
+    int top_k,
     int max_iter
 )
 {
@@ -261,7 +262,7 @@ bool repair_solution_improved(
 
     double current_score = compute_violation_score(mip, activity);
 
-    const int TOP_K = 5;
+    const int TOP_K = top_k;
 
     //------------------------------------------------------------
     // PHASE 1: INTEGER REPAIR

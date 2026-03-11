@@ -96,11 +96,11 @@ echo "Compilation finished."
 # -------------------------------------------------
 echo "[4/5] Running Instances..."
 
-echo "File Name,Total Variables,Problem Type,Best Candidate,Final Score,Result,Time Taken,Max Score Improvement" > results3.csv
+echo "File Name,Total Variables,Problem Type,Best Candidate,Final Score,Result,Time Taken,Max Score Improvement" > results4.csv
 
 SOLVER="./$BIN"
 
-for i in $(seq -f "%02g" 33 33)
+for i in $(seq -f "%02g" 1 50)
 do
   echo "--------------------------------------------------"
   echo "Running Instance: instance_$i.mps"
@@ -118,7 +118,7 @@ do
   csv_line=$(echo "$output" | grep CSV_RESULT | cut -d',' -f2-)
 
   if [ ! -z "$csv_line" ]; then
-      echo "$csv_line" >> results3.csv
+      echo "$csv_line" >> results4.csv
   fi
 
   if [ $? -ne 0 ]; then

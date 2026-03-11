@@ -1,0 +1,18 @@
+File Name,Total Variables,Problem Type,Best Candidate,Final Score,Result,Time Taken,Max Score Improvement
+instance_01.mps,5664,PB,0,2.94046e-05,0,0.411937,0.397779
+instance_02.mps,146071,MB,0,5.87115e-07,1,8.31301,2.08961
+instance_03.mps,2351,MI,0,3.30586e-06,0,3.72511,612.018
+instance_04.mps,19061,MI,0,0.000185147,0,23.2712,35197.1
+instance_05.mps,21451,MI,0,0.0107083,0,23.4026,16653
+instance_06.mps,122810,PB,0,0.000232719,0,3.9728,17.465
+instance_07.mps,92552,PI,0,0,1,2.94223,4.43859
+instance_08.mps,25897,PI,0,5.92573e-06,0,0.77174,0.0452486
+instance_09.mps,466,MB,0,9.92622e-06,0,2.60747,1.99696e-06
+instance_10.mps,210,MB,0,1.30087e-05,0,0.323313,2.97025e-09
+instance_11.mps,51078,PB,0,5.3914e-09,1,1.54392,1.83845e-06
+instance_12.mps,14740,PI,0,2.95719e-08,1,0.490731,0
+instance_13.mps,1369500,PI,0,3.03657e-05,0,11.5711,0
+instance_14.mps,22970,MI,0,3.92942e-06,0,9.15505,973.419
+instance_15.mps,22945,MI,0,0.00248258,0,5.19448,821.393
+instance_16.mps,57520,MB,0,0,1,6.14265,6.88932e-08
+instance_17.mps,481390,MB,0,6.59921e-10,1,117.17,0
