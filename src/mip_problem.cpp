@@ -75,6 +75,11 @@ void MIPProblem::load_from_mps(const std::string& filename)
 
     num_cols = n;
     num_rows = 0;
+    
+   const auto& colNames = solver.getColNames();
+    var_names = colNames;  // store in your class (std::vector<std::string>)
+
+
 
     /* ---- objective ---- */
     c.assign(n, 0.0);

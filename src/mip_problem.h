@@ -41,7 +41,9 @@ struct MIPProblem {
     std::vector<int> csc_col_ptr;
     std::vector<int> csc_row_idx;
     std::vector<double> csc_val;
-
+    
+    //var names
+    std::vector<std::string>var_names;
     // ---- API ----
     MIPProblem();
 

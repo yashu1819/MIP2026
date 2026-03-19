@@ -24,13 +24,10 @@ sudo  apt update
 source ~/.bashrc
 
 
-# cuopt
 pip install --extra-index-url=https://pypi.nvidia.com \
   'nvidia-cuda-runtime==13.0.*' \
   'cuopt-server-cu13==26.2.*' \
-  'cuopt-sh-client==26.02.*'
-
-
+  'cuopt-sh-client==26.2.*'
 
 SRC_MAIN="src/main.cpp"
 SRC_MIP="src/mip_problem.cpp"
