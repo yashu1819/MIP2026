@@ -10,7 +10,6 @@ SRC_LOCKS="locks.cu"
 SRC_LOCKS_ROUNDING="locks_rounding.cu"
 SRC_ACTIVITY="activity.cu"
 SRC_SCORE="score.cpp"
-SRC_EPSILON_GENERATOR="epsilon_generator.cpp"
 SRC_EPSILON_SEARCH="epsilon_search.cpp"
 SRC_REPAIR="repair.cpp"
 SRC_RESULTS_FILE="results_file.cpp"
@@ -74,12 +73,11 @@ nvcc \
   -O3 -g \
   -I"$INCLUDE_PATH" \
   -L"$LIBCUOPT_LIB_DIR" \
-  $SRC_RESULTS_FILE \
+  $SRC_MAIN \
   $SRC_LOCKS \
   $SRC_LOCKS_ROUNDING \
   $SRC_ACTIVITY \
   $SRC_SCORE \
-  $SRC_EPSILON_GENERATOR \
   $SRC_EPSILON_SEARCH \
   $SRC_REPAIR \
   $SRC_MIP \
@@ -96,11 +94,11 @@ echo "Compilation finished."
 # -------------------------------------------------
 echo "[4/5] Running Instances..."
 
-echo "File Name,Total Variables,Problem Type,Best Candidate,Final Score,Result,Time Taken,Max Score Improvement" > results4.csv
+# echo "File Name,Total Variables,Problem Type,Best Candidate,Final Score,Result,Time Taken,Max Score Improvement" > results4.csv
 
 SOLVER="./$BIN"
 
-for i in $(seq -f "%02g" 1 50)
+for i in $(seq -f "%02g" 2 2)
 do
   echo "--------------------------------------------------"
   echo "Running Instance: instance_$i.mps"
@@ -111,19 +109,19 @@ do
   # echo "$csv_line" >> results.csv
 
 
-  output=$($SOLVER $INSTANCE_DIR/instance_$i.mps)
+#   output=$($SOLVER $INSTANCE_DIR/instance_$i.mps)
 
-  echo "$output"
+#   echo "$output"
 
-  csv_line=$(echo "$output" | grep CSV_RESULT | cut -d',' -f2-)
+#   csv_line=$(echo "$output" | grep CSV_RESULT | cut -d',' -f2-)
 
-  if [ ! -z "$csv_line" ]; then
-      echo "$csv_line" >> results4.csv
-  fi
+#   if [ ! -z "$csv_line" ]; then
+#       echo "$csv_line" >> results4.csv
+#   fi
 
-  if [ $? -ne 0 ]; then
-      echo "Error: Solver failed on instance_$i.mps"
-  fi
+#   if [ $? -ne 0 ]; then
+#       echo "Error: Solver failed on instance_$i.mps"
+#   fi
 
 done
 

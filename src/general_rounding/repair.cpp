@@ -7,6 +7,56 @@
 #include <iostream>
 #include <algorithm>
 #include <unordered_set>
+#include <random>
+
+
+double compute_objective(
+    const MIPProblem& mip,
+    const std::vector<double>& x
+)
+{
+    double obj = mip.obj_offset;
+
+    for(int j=0;j<mip.num_cols;j++)
+        obj += mip.c[j] * x[j];
+
+    return obj;
+}
+
+void perturb_solution(
+    const MIPProblem& mip,
+    std::vector<double>& x,
+    const std::vector<bool>& is_fixed,
+    int num_changes
+)
+{
+    static std::mt19937 rng(42);
+
+    std::uniform_int_distribution<int> dist(0, mip.num_cols-1);
+
+    for(int k=0;k<num_changes;k++)
+    {
+        int j = dist(rng);
+
+        if(is_fixed[j]) continue;
+
+        if(mip.vartype[j] == VarType::CONTINUOUS)
+        {
+            std::uniform_real_distribution<double> d(mip.lb[j], mip.ub[j]);
+            x[j] = d(rng);
+        }
+        else
+        {
+            // integer/binary flip
+            double val = std::round(x[j]);
+
+            if(mip.vartype[j] == VarType::BINARY)
+                x[j] = 1.0 - val;
+            else
+                x[j] = mip.lb[j] + (int)(rng()%((int)mip.ub[j]-(int)mip.lb[j]+1));
+        }
+    }
+}
 
 bool repair_solution(
     const MIPProblem& mip,
@@ -254,13 +304,15 @@ bool repair_solution_improved(
     std::vector<double>& x,
     const std::vector<bool>& is_fixed,
     int top_k,
-    int max_iter
+    int max_iter, 
+    double tol
 )
 {
     std::vector<double> activity;
     compute_constraint_activity_gpu(mip,x,activity);
 
     double current_score = compute_violation_score(mip, activity);
+    if(current_score < tol) return true;
 
     const int TOP_K = top_k;
 
@@ -388,6 +440,7 @@ bool repair_solution_improved(
         }
 
         current_score=best_score;
+        if (current_score <= tol) return true;
     }
 
     //------------------------------------------------------------
@@ -539,7 +592,133 @@ bool repair_solution_improved(
         }
 
         current_score=best_score;
+        if(current_score <= tol) return true;
     }
 
-    return false;
+    return (current_score < tol);
+}
+
+
+
+// Solution optimize_with_repair(
+//     const MIPProblem& mip,
+//     const std::vector<double>& x_start,
+//     const std::vector<bool>& is_fixed,
+//     int top_k,
+//     double time_limit,
+//     double tol
+// )
+// {
+//     double start_time = getTime();
+
+//     Solution best_sol;
+//     best_sol.feasible = false;
+
+//     std::vector<double> x = x_start;
+
+//     while(getTime() - start_time < time_limit)
+//     {
+//         //--------------------------------------------------
+//         // Copy solution
+//         //--------------------------------------------------
+//         std::vector<double> x_trial = x;
+
+//         //--------------------------------------------------
+//         // Perturb
+//         //--------------------------------------------------
+//         perturb_solution(mip, x_trial, is_fixed, 20);
+
+//         //--------------------------------------------------
+//         // Repair
+//         //--------------------------------------------------
+//         bool feasible = repair_solution_improved(
+//             mip, x_trial, is_fixed, top_k, 200
+//         );
+
+//         if(!feasible) continue;
+
+//         //--------------------------------------------------
+//         // Evaluate objective
+//         //--------------------------------------------------
+//         double obj = compute_objective(mip, x_trial);
+
+//         //--------------------------------------------------
+//         // Accept if better
+//         //--------------------------------------------------
+//         if(!best_sol.feasible || obj < best_sol.obj_value)
+//         {
+//             best_sol.feasible = true;
+//             best_sol.x = x_trial;
+//             best_sol.obj_value = obj;
+
+//             // move search center
+//             x = x_trial;
+
+//             std::cout << "Improved obj = " << obj << "\n";
+//         }
+//     }
+//     return best_sol;
+// }
+
+
+Solution optimize_with_repair(
+    const MIPProblem& mip,
+    const std::vector<double>& x_start,
+    const std::vector<bool>& is_fixed,
+    int top_k,
+    double time_limit,
+    double tol
+)
+{
+    double start_time = getTime();
+
+    Solution best_sol;
+    best_sol.x = x_start;
+    best_sol.feasible = true;
+    best_sol.obj_value = compute_objective(mip, x_start);
+
+    std::vector<double> x = x_start;
+
+    while(getTime() - start_time < time_limit)
+    {
+        //--------------------------------------------------
+        // Copy solution
+        //--------------------------------------------------
+        std::vector<double> x_trial = x;
+
+        //--------------------------------------------------
+        // Perturb
+        //--------------------------------------------------
+        perturb_solution(mip, x_trial, is_fixed, 20);
+
+        //--------------------------------------------------
+        // Repair (WITH TOL)
+        //--------------------------------------------------
+        bool ok = repair_solution_improved(
+            mip, x_trial, is_fixed, top_k, 200, tol
+        );
+
+        if(!ok) continue;
+
+        //--------------------------------------------------
+        // Evaluate objective
+        //--------------------------------------------------
+        double obj = compute_objective(mip, x_trial);
+
+        //--------------------------------------------------
+        // Accept if better
+        //--------------------------------------------------
+        // if(!best_sol.feasible || obj < best_sol.obj_value)
+        if(obj < best_sol.obj_value)
+        {
+            best_sol.x = x_trial;
+            best_sol.obj_value = obj;
+
+            x = x_trial;
+
+            std::cout << "Improved obj = " << obj << "\n";
+        }
+    }
+
+    return best_sol;
 }

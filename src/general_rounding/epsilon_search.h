@@ -6,12 +6,6 @@
 
 #include <vector>
 
-// struct EpsilonCandidate
-// {
-//     double epsilon;
-//     double score;
-// };
-
 struct EpsilonCandidate
 {
     double epsilon;
@@ -20,6 +14,11 @@ struct EpsilonCandidate
 
     std::vector<bool> is_fixed; // variable status
 };
+
+std::vector<double> generate_epsilons_random(
+    int num_eps,
+    double max_eps
+);
 
 std::vector<EpsilonCandidate> epsilon_neighborhood_search(
     const MIPProblem& mip,

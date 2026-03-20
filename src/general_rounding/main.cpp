@@ -1,5 +1,3 @@
-#include "locks.h"
-#include "locks_rounding.h"
 #include "epsilon_search.h"
 #include "activity.h"
 #include "score.h"
@@ -9,6 +7,7 @@
 #include "../relaxation/lp_relaxation.h"
 
 #include <iostream>
+#include <limits>
 
 int main(int argc, char** argv)
 {
@@ -25,9 +24,7 @@ int main(int argc, char** argv)
     //--------------------------------------------------
 
     MIPProblem mip;
-
     mip.load_from_mps(filename);
-
     mip.finalize();
 
     std::cout << "Model loaded\n";
@@ -42,9 +39,7 @@ int main(int argc, char** argv)
 
     LPRelaxation lp(mip);
 
-    bool ok = lp.solve();
-
-    if(!ok)
+    if(!lp.solve())
     {
         std::cout << "LP solve failed\n";
         return 0;
@@ -56,258 +51,95 @@ int main(int argc, char** argv)
     std::cout << "LP objective = " << lp.obj_value << "\n";
 
     //--------------------------------------------------
-    // Compute Locks
+    // Epsilon Neighborhood Search
     //--------------------------------------------------
 
-    std::cout << "\nComputing variable locks (GPU)...\n";
+    std::cout << "\nRunning epsilon neighborhood search...\n";
 
-    VariableLocks locks = compute_variable_locks_gpu(mip);
+    auto candidates = epsilon_neighborhood_search(mip, x_frac, 32);
+    int K = std::min(5, (int)candidates.size());
+    std::cout << "Top epsilon candidates:\n";
+    for(int i=0;i<K;i++) std::cout << "eps=" << candidates[i].epsilon << " score=" << candidates[i].score << "\n";
 
-    std::cout << "Locks computed\n";
+    //--------------------------------------------------
+    // Repair candidates → find best feasible start
+    //--------------------------------------------------
 
-    for(int i=0;i<10 && i<mip.num_cols;i++)
+    std::vector<double> best_x;
+    bool best_feasible = false;
+    double best_obj = std::numeric_limits<double>::infinity();
+
+    for(int i=0;i<K;i++)
     {
-        std::cout
-        << "Var " << i
-        << " up=" << locks.up_locks[i]
-        << " down=" << locks.down_locks[i]
-        << "\n";
-    }
+        std::vector<double> x = candidates[i].x;
+        std::vector<bool> is_fixed = candidates[i].is_fixed;
 
-    //--------------------------------------------------
-    // Lock Guided Rounding
-    //--------------------------------------------------
+        std::cout << "\nRepairing candidate " << i << "\n";
 
-    std::cout << "\nRunning lock-guided rounding...\n";
+        bool ok = repair_solution_improved(mip, x, is_fixed, 5, 500);
 
-    Solution sol = lock_guided_rounding_gpu(mip, x_frac, locks);
+        // bool feasible = mip.check_feasible(x);
 
-    std::cout << "Rounded solution (first 10 variables)\n";
-
-    for(int i=0;i<10 && i<mip.num_cols;i++)
-    {
-        std::cout
-        << "x[" << i << "] = "
-        << sol.x[i]
-        << "\n";
-    }
-
-    //--------------------------------------------------
-    // Feasibility check
-    //--------------------------------------------------
-
-    bool feasible = mip.check_feasible(sol.x);
-
-    std::cout << "\nFeasible after rounding: "
-              << (feasible ? "YES" : "NO")
-              << "\n";
-
-
-    if(!mip.check_feasible(sol.x))
-    {
-        std::cout<<"Running epsilon neighborhood search\n";
-
-        auto candidates = epsilon_neighborhood_search(
-            mip,
-            x_frac,
-            32
-        );
-
-        int K = 5;
-
-        std::cout<<"Top epsilon candidates:\n";
-
-        for(int i=0;i<K;i++)
+        if(ok)
         {
-            std::cout
-            <<"eps="<<candidates[i].epsilon
-            <<" score="<<candidates[i].score
-            <<"\n";
-        }
+            double obj = compute_objective(mip, x);
 
-        //-------------------------------------------------
-        // Try repair
-        //-------------------------------------------------
+            std::cout << "Feasible with objective = " << obj << "\n";
 
-        double best_score_overall = 1e100;
-        double max_score_improvement = 0.0;
-        int best_candidate_index = -1;
-        std::vector<double> best_x = sol.x;
-
-        int limit = std::min(K, (int)candidates.size());
-        // for(int i=0;i<limit;i++)
-        // {
-        //     std::vector<double> x = candidates[i].x;
-        //     std::vector<bool> is_fixed = candidates[i].is_fixed;
-
-        //     std::cout<<"\nRepairing candidate "<<i<<"\n";
-
-        //     int fixed_count = 0;
-        //     for(bool f : is_fixed) if(f) fixed_count++;
-
-        //     std::cout << "Fixed variables = " << fixed_count
-        //             << " / " << mip.num_cols << "\n";
-
-        //     //-------------------------------------------------
-        //     // Initial score
-        //     //-------------------------------------------------
-
-        //     std::vector<double> activity;
-
-        //     compute_constraint_activity_gpu(mip,x,activity);
-
-        //     double before_score = compute_violation_score(mip,activity);
-
-        //     std::cout<<"Initial violation score = "
-        //             <<before_score<<"\n";
-
-        //     //-------------------------------------------------
-        //     // Run repair
-        //     //-------------------------------------------------
-
-        //     bool ok = repair_solution(mip,x,is_fixed,500);
-
-        //     //-------------------------------------------------
-        //     // Score after repair
-        //     //-------------------------------------------------
-
-        //     compute_constraint_activity_gpu(mip,x,activity);
-
-        //     double after_score = compute_violation_score(mip,activity);
-
-        //     std::cout<<"After repair score = "
-        //             <<after_score<<"\n";
-
-        //     //-------------------------------------------------
-        //     // Feasibility
-        //     //-------------------------------------------------
-
-        //     bool feasible = mip.check_feasible(x);
-
-        //     std::cout<<"Feasible = "
-        //             <<(feasible ? "YES" : "NO")<<"\n";
-
-        //     //-------------------------------------------------
-        //     // Print first variables
-        //     //-------------------------------------------------
-
-        //     std::cout<<"Repaired solution (first 10 vars):\n";
-
-        //     for(int j=0;j<10 && j<mip.num_cols;j++)
-        //     {
-        //         std::cout<<"x["<<j<<"] = "<<x[j]<<"\n";
-        //     }
-
-        //     //-------------------------------------------------
-        //     // Accept solution if feasible
-        //     //-------------------------------------------------
-
-        //     if(ok && feasible)
-        //     {
-        //         std::cout<<"\nFeasible solution found after repair!\n";
-
-        //         sol.x = x;
-        //         sol.feasible = true;
-
-        //         break;
-        //     }
-        // }
-
-        for(int i=0;i<limit;i++)
-        {
-            std::vector<double> x = candidates[i].x;
-            std::vector<bool> is_fixed = candidates[i].is_fixed;
-
-            std::cout<<"\nRepairing candidate "<<i<<"\n";
-
-            int fixed_count = 0;
-            for(bool f : is_fixed) if(f) fixed_count++;
-
-            std::cout<<"Fixed variables = " <<fixed_count<<" / "<<mip.num_cols<<"\n";
-
-            //-------------------------------------------------
-            // Initial score
-            //-------------------------------------------------
-
-            std::vector<double> activity;
-
-            compute_constraint_activity_gpu(mip,x,activity);
-
-            double before_score = compute_violation_score(mip,activity);
-
-            std::cout<<"Initial violation score = " <<before_score<<"\n";
-
-            //-------------------------------------------------
-            // Run repair
-            //-------------------------------------------------
-
-            // bool ok = repair_solution(mip, x, is_fixed, 2000);
-            bool ok = repair_solution_improved(mip, x, is_fixed, 2000);
-
-            //-------------------------------------------------
-            // Score after repair
-            //-------------------------------------------------
-
-            compute_constraint_activity_gpu(mip,x,activity);
-
-            double after_score = compute_violation_score(mip,activity);
-
-            std::cout<<"After repair score = " <<after_score<<"\n";
-
-            //-------------------------------------------------
-            // Improvement statistics
-            //-------------------------------------------------
-
-            double improvement = before_score - after_score;
-
-            if(improvement > max_score_improvement) max_score_improvement = improvement;
-
-            if(after_score < best_score_overall)
+            if(!best_feasible || obj < best_obj)
             {
-                best_score_overall = after_score;
+                best_feasible = true;
+                best_obj = obj;
                 best_x = x;
-                best_candidate_index = i;
             }
-
-            //-------------------------------------------------
-            // Feasibility check
-            //-------------------------------------------------
-            // best_score_overall /= 1000;
-
-            bool feasible = mip.check_feasible(x);
-
-            std::cout<<"Feasible = " <<(feasible ? "YES" : "NO")<<"\n";
-
-            //-------------------------------------------------
-            // Early success threshold
-            //-------------------------------------------------
-
-            // if(after_score < 1e-3) std::cout<<"Repair reached near-feasible score (<1e-3)\n";
-
-            //-------------------------------------------------
-            // Debug output
-            //-------------------------------------------------
-
-            std::cout<<"Repaired solution (first 10 vars):\n";
-
-            for(int j=0;j<10 && j<mip.num_cols;j++) std::cout<<"x["<<j<<"] = "<<x[j]<<"\n";
         }
-
-        std::cout<<"\n-------------------------------------\n";
-        std::cout<<"Repair statistics\n";
-        std::cout<<"Best score achieved = "<<best_score_overall<<"\n";
-
-        std::cout<<"Best candidate index = " <<best_candidate_index<<"\n";
-        std::cout<<"Max score improvement = " <<max_score_improvement<<"\n";
-
-        bool near_feasible = (best_score_overall < 1e-3);
-
-        std::cout<<"Feasible solution found = "
-                <<(near_feasible ? "YES" : "NO")<<"\n";
-        std::cout<<"-------------------------------------\n";
-
-        sol.x = best_x;
+        else
+        {
+            std::cout << "Not feasible\n";
+        }
     }
+
+    //--------------------------------------------------
+    // If no feasible solution → exit
+    //--------------------------------------------------
+
+    if(!best_feasible)
+    {
+        std::cout << "\nNo feasible solution found.\n";
+        return 0;
+    }
+
+    //--------------------------------------------------
+    // Optimization Phase (THIS WAS MISSING)
+    //--------------------------------------------------
+
+    std::cout << "\nStarting optimization phase...\n";
+
+    std::vector<bool> is_fixed(mip.num_cols, false);
+
+    Solution best_sol = optimize_with_repair(
+        mip,
+        best_x,
+        is_fixed,
+        5,      // top_k
+        100.0     // seconds (tune this)
+    );
+
+    //--------------------------------------------------
+    // Final Output
+    //--------------------------------------------------
+
+    std::cout << "\n=====================================\n";
+    std::cout << "FINAL RESULT\n";
+    
+    std::cout << "Feasible: YES\n";
+    std::cout << "Objective: " << best_sol.obj_value << "\n";
+
+    std::cout << "First 10 variables:\n";
+    for(int i=0;i<10 && i<mip.num_cols;i++)
+        std::cout << "x["<<i<<"] = " << best_sol.x[i] << "\n";
+
+    std::cout << "=====================================\n";
 
     return 0;
 }
