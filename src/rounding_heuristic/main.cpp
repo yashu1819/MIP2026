@@ -122,7 +122,7 @@ int main(int argc, char** argv)
         best_x,
         is_fixed,
         5,      // top_k
-        100.0     // seconds (tune this)
+        300.0     // seconds (tune this)
     );
 
     //--------------------------------------------------

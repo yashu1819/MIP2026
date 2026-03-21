@@ -197,7 +197,7 @@ Solution FeasibilityJump::run(const FeasibilityJumpParams& params) {
 
         for (int it = 0; it < params.max_iters; ++it) {
            //0. Check for time limit
-	   if (getTime()-t1>180){
+	   if (getTime()-t1>300){
 	      Solution sol; sol.feasible = false; sol.x = x;
                 return sol;
 
