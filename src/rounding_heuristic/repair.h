@@ -29,7 +29,7 @@ bool repair_solution_improved(
     const std::vector<bool>& is_fixed,
     int top_k,
     int max_iter,
-    double tol = 1e-4
+    double tol = 1e-6
 );
 
 Solution optimize_with_repair(
@@ -38,7 +38,7 @@ Solution optimize_with_repair(
     const std::vector<bool>& is_fixed,
     int top_k,
     double time_limit,
-    double tol = 1e-4
+    double tol = 1e-6
 );
 
 #endif
