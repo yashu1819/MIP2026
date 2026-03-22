@@ -90,29 +90,3 @@ Solution solve_with_epsilon_repair( // CORE SOLVER FUNCTION
     return best_sol;
 }
 
-int main(int argc, char** argv)
-{
-    if(argc < 2)
-    {
-        std::cout << "Usage: ./solver instance.mps\n";
-        return 0;
-    }
-
-    std::string filename = argv[1];
-
-    //--------------------------------------------------
-    // Load MIP
-    //--------------------------------------------------
-
-    MIPProblem mip;
-    mip.load_from_mps(filename);
-    mip.finalize();
-
-    double time_limit = 30.0;// Time given to optimize function. change as needed
-
-    Solution sol = solve_with_epsilon_repair(mip, time_limit);
-
-    std::cout << "Final Objective: " << sol.obj_value << "\n";
-
-    return 0;
-}
