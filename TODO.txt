@@ -3,10 +3,36 @@ Meeting 11Feb2026 :
 - centre of polyhedron finding then rounding ->chebychev constraints || Analytic centre can also be explored, told to be more secure.
 - cgdb debugger -> learn its basic functions
 
+Meeting of 15Mar2026 :
+- Alternate reformulation of chebychev or Convex combo of other points
+
+- Release fixed variables that are fixed in iteration afterwards Fixed variables count and epsilon taken
+And how many integer values in lp solution
+
+Rounded value can be feasible 7.8 and 8. But 8 can be out of polytope
+
+- some way to check before fixing 
+- coeff of obj function. 
+- How much are near optimal 
+- Distance from Naieve rounding
+
+- epsilon selection. Selection of epsilon could be dependent on. If some procedure can imply
+- Should be keep it decreasing 
+
+- values far from integrality should be fixed?? 
+
+Think : release fixed variables and epsilon thing……..
+
 
 In no particular order
 
 - JAX lookup
-- How can ML be integrated if possible? as no pre-training is allowed 
+- How can ML be integrated if possible? 
 - LNS Based algorithms if can be integrated
 - Parallelizing to death
+
+
+
+Drawbacks of Neural diving paper(and supervised learning) : 
+- Very supervised so needs labeled data and also needs to
+be trained on specific problems set to perform correctly.

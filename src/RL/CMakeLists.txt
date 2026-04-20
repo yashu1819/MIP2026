@@ -1,0 +1,94 @@
+# CMakeLists.txt for RL-SPH Heuristic
+cmake_minimum_required(VERSION 3.14)
+project(RL_SPH LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# RL-SPH source files
+set(RL_SPH_SOURCES
+    rl_graph.cpp
+    rl_heuristic.cpp
+    rl_agent.cpp
+    rl_training.cpp
+)
+
+set(RL_SPH_HEADERS
+    rl_graph.h
+    rl_state.h
+    rl_reward.h
+    rl_variable_selection.h
+    rl_heuristic.h
+    rl_agent.h
+    rl_training.h
+    rl_features.h
+)
+
+# MIP Definition library
+set(MIP_DEF_SOURCES
+    ../Definition/mip_problem.cpp
+    ../Utiils/mps_reader.cpp
+)
+
+# Build MIP definition as static library
+add_library(mip_definition STATIC ${MIP_DEF_SOURCES})
+target_include_directories(mip_definition PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+)
+
+# Find COIN-OR libraries (required by MIP definition)
+find_path(OSI_INCLUDE_DIR NAMES coin/OsiClpSolverInterface.hpp)
+find_library(OSICLP_LIBRARY NAMES OsiClp)
+find_library(OSI_LIBRARY NAMES Osi)
+find_library(CLP_LIBRARY NAMES Clp)
+find_library(COIN_UTILS_LIBRARY NAMES CoinUtils)
+
+if(OSI_INCLUDE_DIR AND OSICLP_LIBRARY AND OSI_LIBRARY AND CLP_LIBRARY AND COIN_UTILS_LIBRARY)
+    target_include_directories(mip_definition PUBLIC ${OSI_INCLUDE_DIR})
+    target_link_libraries(mip_definition
+        ${OSICLP_LIBRARY}
+        ${OSI_LIBRARY}
+        ${CLP_LIBRARY}
+        ${COIN_UTILS_LIBRARY}
+    )
+endif()
+
+# Main executable
+add_executable(rl_sph_test
+    main_rl.cpp
+    ${RL_SPH_SOURCES}
+)
+
+target_include_directories(rl_sph_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+)
+
+target_link_libraries(rl_sph_test PRIVATE mip_definition)
+
+# Compiler warnings
+target_compile_options(rl_sph_test PRIVATE
+    $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -O2>
+    $<$<CXX_COMPILER_ID:Clang>:-Wall -Wextra -O2>
+    $<$<CXX_COMPILER_ID:MSVC>:/W4 /O2>
+)
+
+# LibTorch support (optional)
+option(USE_LIBTORCH "Build with LibTorch for full neural network" OFF)
+if(USE_LIBTORCH)
+    find_package(Torch REQUIRED)
+    target_link_libraries(rl_sph_test PRIVATE ${TORCH_LIBRARIES})
+    target_compile_definitions(rl_sph_test PRIVATE -DUSE_LIBTORCH)
+endif()
+
+# Compiler warnings
+target_compile_options(rl_sph_test PRIVATE
+    $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -O2>
+    $<$<CXX_COMPILER_ID:Clang>:-Wall -Wextra -O2>
+    $<$<CXX_COMPILER_ID:MSVC>:/W4 /O2>
+)
+
+# Optional: Build with LibTorch for neural network (future)
+# Uncomment when implementing the full neural network
+# find_package(Torch REQUIRED)
+# target_link_libraries(rl_sph_test PRIVATE ${TORCH_LIBRARIES})
