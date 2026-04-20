@@ -1,7 +1,12 @@
 SRC_MAIN="main.cpp"
 SRC_MIP="mip_problem.cpp"
 SRC_LP="lp_relaxation.cpp"
-BIN="mip_lp_solver"
+SRC_CHEB="chebyshev_center.cpp"
+SRC_ANALYTIC="analytic_center.cpp"
+SRC_RELAXED_CHEB="chebyshev_center_relaxed.cpp"
+SRC_INTERIOR="interior_point.cpp"
+SRC_NB_ROUNDING="neighbourhood_rounding.cpp"
+BIN="nb_solver"
 
 # -----------------------------------------
 # 1. Find cuOpt header
@@ -64,17 +69,20 @@ echo "[3/5] Compiling..."
 nvcc \
   -std=c++17 \
   -O3 -g -G \
--I"$INCLUDE_PATH" \
-    -L"$LIBCUOPT_LIB_DIR" \
-  main.cpp\
+  -I"$INCLUDE_PATH" \
+  -L"$LIBCUOPT_LIB_DIR" \
+  main.cpp \
   mip_problem.cpp \
+  lp_relaxation.cpp \
   chebyshev_center.cpp \
+  chebyshev_center_relaxed.cpp \
+  analytic_center.cpp \
+  interior_point.cpp \
   neighbourhood_rounding.cpp \
   neighbourhood_rounding.cu \
-  lp_relaxation.cpp \
   -lCoinUtils -lClp -lOsiClp -lOsi \
- -lcuopt \
-    -Xlinker -rpath,"$LIBCUOPT_LIB_DIR" \
+  -lcuopt \
+  -Xlinker -rpath,"$LIBCUOPT_LIB_DIR" \
   -o nb_solver
 
 SOLVER="./nb_solver"
