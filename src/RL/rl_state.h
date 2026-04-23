@@ -87,12 +87,19 @@ inline RLState create_state(
     return state;
 }
 
-// Check if solution is feasible
+// Check if a variable is integer/binary (i.e., not continuous)
+inline bool is_integer_variable(const MIPProblem& mip, int var_idx) {
+    return mip.vartype[var_idx] == VarType::INTEGER ||
+           mip.vartype[var_idx] == VarType::BINARY;
+}
+
+// Check if solution is feasible (MILP-aware: checks integrality)
 inline bool is_feasible(
     const MIPProblem& mip,
     const RLState& state,
     double constr_tol = 1e-6,
-    double bound_tol = 1e-6
+    double bound_tol = 1e-6,
+    double int_tol = 1e-5
 ) {
     // Check constraint satisfaction
     for (int i = 0; i < state.m; ++i) {
@@ -101,11 +108,18 @@ inline bool is_feasible(
         }
     }
 
-    // Check bounds
+    // Check bounds and integrality
     for (int i = 0; i < state.n; ++i) {
         if (state.x[i] < mip.lb[i] - bound_tol ||
             state.x[i] > mip.ub[i] + bound_tol) {
             return false;
+        }
+        // MILP: integer/binary variables must have integer values
+        if (is_integer_variable(mip, i)) {
+            double frac = std::abs(state.x[i] - std::round(state.x[i]));
+            if (frac > int_tol) {
+                return false;
+            }
         }
     }
 
@@ -134,7 +148,10 @@ enum class Action : int {
     INCREASE = 1
 };
 
-// Apply actions to get new solution
+// Apply actions to get new solution (MILP-aware)
+// - Skips continuous variables (RL only modifies integer/binary)
+// - Clamps binary variables to {0, 1}
+// - Clamps integer variables to [lb, ub] and rounds
 inline std::vector<double> apply_actions(
     const std::vector<double>& x,
     const std::vector<Action>& actions,
@@ -144,6 +161,40 @@ inline std::vector<double> apply_actions(
     for (size_t i = 0; i < changeable_indices.size(); ++i) {
         int var_idx = changeable_indices[i];
         x_new[var_idx] += static_cast<int>(actions[i]);
+    }
+    return x_new;
+}
+
+// MILP-aware version: skips continuous, clamps binary/integer
+inline std::vector<double> apply_actions_milp(
+    const MIPProblem& mip,
+    const std::vector<double>& x,
+    const std::vector<Action>& actions,
+    const std::vector<int>& changeable_indices
+) {
+    std::vector<double> x_new = x;
+    for (size_t i = 0; i < changeable_indices.size(); ++i) {
+        int var_idx = changeable_indices[i];
+
+        // Skip continuous variables — they should not be modified by ±1
+        if (mip.vartype[var_idx] == VarType::CONTINUOUS) {
+            continue;
+        }
+
+        // Apply action
+        x_new[var_idx] += static_cast<int>(actions[i]);
+
+        // Clamp to bounds
+        if (mip.vartype[var_idx] == VarType::BINARY) {
+            // Binary: clamp to {0, 1}
+            if (x_new[var_idx] < 0.5) x_new[var_idx] = 0.0;
+            else x_new[var_idx] = 1.0;
+        } else {
+            // Integer: clamp to [lb, ub] and round
+            x_new[var_idx] = std::round(x_new[var_idx]);
+            if (x_new[var_idx] < mip.lb[var_idx]) x_new[var_idx] = mip.lb[var_idx];
+            if (x_new[var_idx] > mip.ub[var_idx]) x_new[var_idx] = mip.ub[var_idx];
+        }
     }
     return x_new;
 }

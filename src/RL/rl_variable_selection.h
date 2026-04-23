@@ -44,7 +44,7 @@ private:
     );
 };
 
-// Select variables for phase 1 or phase 2
+// Select variables for phase 1 or phase 2 (MILP-aware: skips continuous variables)
 inline std::vector<int> VariableSelector::select_variables(
     const RLState& state,
     int phase
@@ -52,34 +52,36 @@ inline std::vector<int> VariableSelector::select_variables(
     int n = state.n;
     int m = state.m;
 
-    // Number of seed and neighbor variables: p = q = log2(n)
-    int p = static_cast<int>(std::log2(n));
+    // MILP: Build list of integer/binary variable indices only
+    std::vector<int> integer_vars;
+    integer_vars.reserve(n);
+    for (int i = 0; i < n; ++i) {
+        if (mip_.vartype[i] == VarType::INTEGER ||
+            mip_.vartype[i] == VarType::BINARY) {
+            integer_vars.push_back(i);
+        }
+    }
+
+    // If no integer variables, return empty (nothing for RL to modify)
+    if (integer_vars.empty()) return {};
+
+    int n_int = static_cast<int>(integer_vars.size());
+
+    // Number of seed and neighbor variables: p = q = log2(n_int)
+    int p = static_cast<int>(std::log2(static_cast<double>(n_int)));
     int q = p;
     if (p < 1) p = 1;
     if (q < 1) q = 1;
 
-    // Build binary incidence matrix indicator: A_j,i != 0
-    // For each variable, compute score based on constraints it appears in
-
+    // Score only integer/binary variables
+    // We use a map from integer_var index to score
     std::vector<double> score_seed(n, 0.0);
 
     if (phase == 1) {
         // Phase 1: Select variables in violated constraints
-        // Score: sum over violated constraints where var appears
-
-        // Indicator: which constraints are violated
-        std::vector<int> violated_constraints;
-        for (int j = 0; j < m; ++j) {
-            if (state.f[j] < 0) {
-                violated_constraints.push_back(j);
-            }
-        }
-
-        // Score for each variable
-        for (int i = 0; i < n; ++i) {
+        for (int i : integer_vars) {
             double score = 0.0;
             for (int constr_idx : graph_.var_to_constraints[i]) {
-                // Check if constraint is violated
                 if (state.f[constr_idx] < 0) {
                     score += 1.0;
                 }
@@ -88,26 +90,22 @@ inline std::vector<int> VariableSelector::select_variables(
         }
 
         // Weight: prefer variables with lower objective coefficient
-        // weight = (max(|c|) - |c| + 1) / max(|c|)
         double max_c = 0.0;
         for (double c : mip_.c) {
             max_c = std::max(max_c, std::abs(c));
         }
         if (max_c < 1e-10) max_c = 1.0;
 
-        for (int i = 0; i < n; ++i) {
+        for (int i : integer_vars) {
             double weight = (max_c - std::abs(mip_.c[i]) + 1.0) / max_c;
             score_seed[i] *= weight;
         }
 
     } else {
-        // Phase 2: Select variables in low-risk (well-satisfied) constraints
-        // Score: sum over satisfied constraints where var appears
-
-        for (int i = 0; i < n; ++i) {
+        // Phase 2: Select variables in well-satisfied constraints
+        for (int i : integer_vars) {
             double score = 0.0;
             for (int constr_idx : graph_.var_to_constraints[i]) {
-                // Check if constraint is well-satisfied (f > 0)
                 if (state.f[constr_idx] > 0) {
                     score += 1.0;
                 }
@@ -116,26 +114,31 @@ inline std::vector<int> VariableSelector::select_variables(
         }
 
         // Weight: prefer variables with higher objective coefficient
-        // weight = |c| / max(|c|)
         double max_c = 0.0;
         for (double c : mip_.c) {
             max_c = std::max(max_c, std::abs(c));
         }
         if (max_c < 1e-10) max_c = 1.0;
 
-        for (int i = 0; i < n; ++i) {
+        for (int i : integer_vars) {
             double weight = std::abs(mip_.c[i]) / max_c;
             score_seed[i] *= weight;
         }
 
-        // Invert scores: higher score = lower risk = more likely to select
-        // score = max(score) - score + 1
+        // Invert scores for phase 2
         double max_score = 0.0;
-        for (double s : score_seed) {
-            max_score = std::max(max_score, s);
+        for (int i : integer_vars) {
+            max_score = std::max(max_score, score_seed[i]);
         }
-        for (int i = 0; i < n; ++i) {
+        for (int i : integer_vars) {
             score_seed[i] = max_score - score_seed[i] + 1.0;
+        }
+    }
+
+    // Zero out scores for continuous variables (safety measure)
+    for (int i = 0; i < n; ++i) {
+        if (mip_.vartype[i] == VarType::CONTINUOUS) {
+            score_seed[i] = 0.0;
         }
     }
 
@@ -143,7 +146,6 @@ inline std::vector<int> VariableSelector::select_variables(
     std::vector<int> seed_indices = sample_weighted(score_seed, p);
 
     // Neighbor selection: variables sharing constraints with seeds
-    // g = rowwise sum of A[:, seeds]
     std::vector<int> constraint_counts(m, 0);
     for (int seed_idx : seed_indices) {
         for (int constr_idx : graph_.var_to_constraints[seed_idx]) {
@@ -151,9 +153,9 @@ inline std::vector<int> VariableSelector::select_variables(
         }
     }
 
-    // score_neighbor = g^T * A = for each var, count shared constraints with seeds
+    // Score neighbors — only integer/binary variables
     std::vector<double> score_neighbor(n, 0.0);
-    for (int i = 0; i < n; ++i) {
+    for (int i : integer_vars) {
         double score = 0.0;
         for (int constr_idx : graph_.var_to_constraints[i]) {
             score += constraint_counts[constr_idx];
@@ -164,6 +166,13 @@ inline std::vector<int> VariableSelector::select_variables(
     // Prevent selecting seed variables as neighbors
     for (int seed_idx : seed_indices) {
         score_neighbor[seed_idx] = -1.0;
+    }
+
+    // Zero out continuous variables from neighbor selection
+    for (int i = 0; i < n; ++i) {
+        if (mip_.vartype[i] == VarType::CONTINUOUS) {
+            score_neighbor[i] = -1.0;
+        }
     }
 
     // Select top q neighbors

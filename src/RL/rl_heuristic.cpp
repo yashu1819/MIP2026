@@ -1,4 +1,5 @@
 #include "rl_heuristic.h"
+#include "rl_lp_subproblem.h"
 #include <random>
 #include <chrono>
 #include <cmath>
@@ -37,21 +38,31 @@ std::vector<double> RLHeuristic::initialize_solution() {
     std::vector<double> x(mip_.num_cols);
 
     if (config_.init_method == "random") {
-        int num_ones = std::max(1, mip_.num_cols / 100);
-        std::vector<int> indices(mip_.num_cols);
-        for (int i = 0; i < mip_.num_cols; ++i) indices[i] = i;
-        std::shuffle(indices.begin(), indices.end(), rng_);
-
-        for (int i = 0; i < mip_.num_cols; ++i) x[i] = 0.0;
-        for (int i = 0; i < num_ones; ++i) x[indices[i]] = 1.0;
+        // Random init: only randomize integer/binary variables
+        std::vector<int> int_indices;
+        for (int i = 0; i < mip_.num_cols; ++i) {
+            if (mip_.vartype[i] == VarType::CONTINUOUS) {
+                // Continuous: set to lower bound
+                x[i] = mip_.lb[i];
+            } else {
+                int_indices.push_back(i);
+                x[i] = 0.0;
+            }
+        }
+        int num_ones = std::max(1, static_cast<int>(int_indices.size()) / 100);
+        std::shuffle(int_indices.begin(), int_indices.end(), rng_);
+        for (int i = 0; i < num_ones && i < static_cast<int>(int_indices.size()); ++i) {
+            x[int_indices[i]] = 1.0;
+        }
     } else {
-        // LP-relaxation based: start at lower bounds, rounded to integer
+        // LP-relaxation based: start at lower bounds
         for (int i = 0; i < mip_.num_cols; ++i) {
             if (mip_.vartype[i] == VarType::CONTINUOUS) {
                 x[i] = mip_.lb[i];
             } else if (mip_.vartype[i] == VarType::BINARY) {
                 x[i] = (mip_.lb[i] >= 0.5) ? 1.0 : 0.0;
             } else {
+                // Integer: round to nearest integer within bounds
                 x[i] = std::floor(mip_.lb[i] + 0.5);
             }
             if (x[i] < mip_.lb[i]) x[i] = mip_.lb[i];
@@ -76,8 +87,11 @@ double RLHeuristic::search_step() {
     std::vector<Action> actions = agent_.select_actions(
         current_state_, graph_, changeable, rng_);
 
-    // Step 3: Apply actions
-    std::vector<double> x_new = apply_actions(current_state_.x, actions, changeable);
+    // Step 3: Apply actions (MILP-aware: skips continuous, clamps binary/integer)
+    std::vector<double> x_new = apply_actions_milp(mip_, current_state_.x, actions, changeable);
+
+    // Step 3b: Solve LP sub-problem for continuous variables
+    solve_lp_subproblem(mip_, x_new);
 
     // Step 4: Update state
     update_state(x_new);

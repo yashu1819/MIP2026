@@ -834,7 +834,7 @@ FUNCTION UPDATE_POLICY(states, actions, rewards, next_states, phases):
 
 **Problem:** The RL-SPH paper assumes all variables are integer. For MILPs, continuous variables must be handled differently.
 
-### 8.1 Modified Variable Selection (TODO)
+### 8.1 Modified Variable Selection (✅ DONE — `rl_variable_selection.h`)
 
 ```
 MODIFIED ALGORITHM 3: Variable Selection for MILP
@@ -855,7 +855,7 @@ q <- p
 return changeable    // Only integer/binary variable indices
 ```
 
-### 8.2 Modified Action Application (TODO)
+### 8.2 Modified Action Application (✅ DONE — `rl_state.h::apply_actions_milp()`)
 
 ```
 FUNCTION apply_actions_milp(x, actions, changeable, mip):
@@ -885,7 +885,7 @@ FUNCTION apply_actions_milp(x, actions, changeable, mip):
     return x_new
 ```
 
-### 8.3 Additional Features for MILP (TODO)
+### 8.3 Additional Features for MILP (❌ TODO — future enhancement)
 
 ```
 // Extra features per variable for MILP:
@@ -906,7 +906,7 @@ feature[k+3] = fractionality[i]        // |x_LP - round(x_LP)| for integer vars
   - `obj_t = c^T x_t`: objective value
 
 ### Variable Selection
-- `p = q = floor(log2(n))` variables
+- `p = q = floor(log2(n_int))` integer/binary variables only (MILP-adapted)
 - Phase 1 seed score: `sum over violated constraints`
 - Phase 2 seed score: `sum over satisfied constraints`
 
@@ -929,15 +929,18 @@ feature[k+3] = fractionality[i]        // |x_LP - round(x_LP)| for integer vars
 |-----------|--------|-------|
 | Algorithm 1 (Solution Search) | ✅ Complete | `rl_heuristic.cpp` |
 | Algorithm 2 (Training Loop) | ✅ Complete | `rl_training.cpp` |
-| Algorithm 3 (Variable Selection) | ✅ Complete | `rl_variable_selection.h` |
+| Algorithm 3 (Variable Selection) | ✅ Complete (MILP-aware) | `rl_variable_selection.h` |
 | Reward Computation | ✅ Complete | `rl_reward.h` |
 | Actor-Critic (LibTorch) | ✅ Complete | `rl_agent.h/cpp` |
 | Actor-Critic (CPU fallback) | ✅ Complete | `rl_agent.h/cpp` |
 | Feature Engineering | ✅ Complete | `rl_features.h` |
-| MILP Variable Filtering | ❌ TODO | Section 8.1 |
-| MILP Action Clamping | ❌ TODO | Section 8.2 |
-| LP Sub-problem for Continuous | ❌ TODO | Section 8.2 |
-| MILP Extra Features | ❌ TODO | Section 8.3 |
+| MILP Variable Filtering | ✅ Complete | `rl_variable_selection.h` |
+| MILP Action Clamping | ✅ Complete | `rl_state.h::apply_actions_milp()` |
+| LP Sub-problem for Continuous | ✅ Complete | `rl_lp_subproblem.h` |
+| Integrality Check | ✅ Complete | `rl_state.h::is_feasible()` |
+| Training Driver | ✅ Complete | `main_train.cpp` |
+| Inference Driver | ✅ Complete | `main_rl.cpp` |
+| MILP Extra Features | ❌ TODO | Section 8.3 (LP reduced costs) |
 
 ---
 
@@ -949,9 +952,11 @@ feature[k+3] = fractionality[i]        // |x_LP - round(x_LP)| for integer vars
 | Training (Alg 2) | `rl_training.cpp` | `train()`, `training_step()` |
 | Variable Selection (Alg 3) | `rl_variable_selection.h` | `select_variables()` |
 | Reward Computation | `rl_reward.h` | `compute_reward()`, `phase1_reward()`, `phase2_reward()` |
-| State Management | `rl_state.h` | `create_state()`, `is_feasible()`, `apply_actions()` |
+| State Management | `rl_state.h` | `create_state()`, `is_feasible()`, `apply_actions_milp()` |
+| LP Sub-problem | `rl_lp_subproblem.h` | `solve_lp_subproblem()` |
 | Graph Building | `rl_graph.h/cpp` | `build_graph()` |
 | Features | `rl_features.h` | `build_variable_features()`, `build_constraint_features()` |
-| Agent (LibTorch) | `rl_agent.h/cpp` | `select_actions()`, `select_actions_training()`, `update()`, `estimate_value()` |
+| Agent (LibTorch) | `rl_agent.h/cpp` | `select_actions()`, `select_actions_training()`, `update()` |
 | Agent (CPU fallback) | `rl_agent.h/cpp` | `ActorNetworkCPU::forward()`, `CriticNetworkCPU::forward()` |
-
+| Training Driver | `main_train.cpp` | `main()`, CLI argument parsing |
+| Inference Driver | `main_rl.cpp` | `main()`, model loading |

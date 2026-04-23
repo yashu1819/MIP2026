@@ -184,21 +184,45 @@ Both: `p = q = log₂(n)` variables
 RL/
 ├── REPORT.md                    # This file
 ├── README.md                    # Usage documentation
-├── rl_heuristic.h/cpp           # Main RL heuristic (Algorithm 1) ✓
-├── rl_agent.h/cpp               # Actor-Critic GNN agent (placeholder) ✓
-├── rl_reward.h                  # Reward computation ✓
-├── rl_variable_selection.h      # Variable selection (Algorithm 3) ✓
-├── rl_training.h/cpp            # Training loop (Algorithm 2) ✓
-├── rl_graph.h/cpp               # Bipartite graph representation ✓
-├── rl_state.h                   # State representation S_t = (x_t, f_t, obj_t) ✓
-├── rl_features.h                # Feature engineering (64-dim var, 32-dim const) ✓
-├── main_rl.cpp                  # Entry point / test driver ✓
-└── CMakeLists.txt               # Build configuration ✓
+├── PSEUDOCODE.md                # Complete pseudocode reference
+├── rl_heuristic.h/cpp           # Main RL heuristic (Algorithm 1) ✅
+├── rl_agent.h/cpp               # Actor-Critic GNN (LibTorch + CPU fallback) ✅
+├── rl_reward.h                  # Two-phase reward computation ✅
+├── rl_variable_selection.h      # Variable selection (Algorithm 3, MILP-aware) ✅
+├── rl_training.h/cpp            # Training loop (Algorithm 2) ✅
+├── rl_graph.h/cpp               # Bipartite graph representation ✅
+├── rl_state.h                   # State + MILP-aware actions ✅
+├── rl_features.h                # Feature engineering (64-dim var, 32-dim constraint) ✅
+├── rl_lp_subproblem.h           # LP sub-problem for continuous variables (CLP) ✅
+├── main_rl.cpp                  # Inference driver ✅
+├── main_train.cpp               # Training driver ✅
+└── CMakeLists.txt               # Build (C++17, both executables) ✅
 ```
 
 ### Dependencies:
-- COIN-OR (Clp, OsiClp, CoinUtils) for LP relaxation
-- PyTorch C++ (LibTorch) for neural network (optional, currently uses random actions)
+- COIN-OR (Clp, OsiClp, CoinUtils) — required for LP sub-problem
+- PyTorch C++ (LibTorch) — optional, for full Transformer GNN
+
+### Implementation Status Table:
+
+| Component | Status | File |
+|-----------|--------|------|
+| Bipartite graph | ✅ Complete | `rl_graph.h/cpp` |
+| State representation | ✅ Complete | `rl_state.h` |
+| Reward computation | ✅ Complete | `rl_reward.h` |
+| Variable selection (Alg. 3) | ✅ Complete (MILP-aware) | `rl_variable_selection.h` |
+| Solution search (Alg. 1) | ✅ Complete | `rl_heuristic.h/cpp` |
+| Training loop (Alg. 2) | ✅ Complete | `rl_training.h/cpp` |
+| Feature engineering | ✅ Complete | `rl_features.h` |
+| Neural network (LibTorch) | ✅ Complete | `rl_agent.h/cpp` |
+| Neural network (CPU fallback) | ✅ Complete | `rl_agent.h/cpp` |
+| MILP variable filtering | ✅ Complete | `rl_variable_selection.h` |
+| MILP action clamping | ✅ Complete | `rl_state.h` |
+| LP sub-problem (continuous vars) | ✅ Complete | `rl_lp_subproblem.h` |
+| Integrality check | ✅ Complete | `rl_state.h` |
+| Training driver | ✅ Complete | `main_train.cpp` |
+| Inference driver | ✅ Complete | `main_rl.cpp` |
+| Build system | ✅ Complete | `CMakeLists.txt` |
 
 ---
 
@@ -211,6 +235,7 @@ RL/
 5. **Toward-optimal bias α=2:** Guides exploration toward better solutions
 6. **Feature dimensions:** 64-dim variable features, 32-dim constraint features (from paper Appendix C)
 7. **Modular design:** Core algorithms (Alg 1-3) independent of neural network implementation
+8. **MILP adaptation:** RL agent restricted to integer/binary variables; LP sub-problem for continuous
 
 ---
 
@@ -222,154 +247,85 @@ RL/
 - [x] Identified existing code structures (MIPProblem, repair functions)
 
 ### Session 2 (2026-04-20)
-- [x] Created `rl_graph.h/cpp` - Bipartite graph representation of ILP
-- [x] Created `rl_state.h` - Observation state S_t = (x_t, f_t, obj_t)
-- [x] Created `rl_reward.h` - Two-phase reward computation (feasibility + optimization)
-- [x] Created `rl_variable_selection.h` - Algorithm 3 implementation
-- [x] Created `rl_heuristic.h/cpp` - Main RL heuristic (Algorithm 1)
-- [x] Created `rl_agent.h/cpp` - Actor-Critic GNN agent (placeholder for LibTorch)
-- [x] Created `rl_training.h/cpp` - Training loop (Algorithm 2)
-- [x] Created `main_rl.cpp` - Test driver executable
-- [x] Created `CMakeLists.txt` - Build configuration
-- [x] Created `README.md` - Usage documentation
+- [x] Created core RL files: state, graph, reward, variable selection, heuristic, agent, training
+- [x] Created test driver and CMakeLists.txt
 
-### Session 3 (2026-04-21) - Feature Engineering
-- [x] Created `rl_features.h` - Neural network input feature builder
-  - VariableFeatures: 64-dim features (objective coeffs, bounds, periodic embedding, degree, centrality)
-  - ConstraintFeatures: 32-dim features (RHS, slack, violation magnitude)
-  - PeriodicEmbedding: sin/cos encoding for unbounded values
-  - FeatureBuilder: scales and normalizes all features to [0,1]
-- [x] Updated `rl_agent.h/cpp` - Integrated feature builder into agent
-- [x] Updated `rl_training.h/cpp` - Fixed agent initialization with pointer semantics
+### Session 3 (2026-04-21) — Feature Engineering
+- [x] Created `rl_features.h` — 64-dim variable + 32-dim constraint features
+- [x] Integrated feature builder into agent
 
-**Implementation Status:**
-| Component | Status | File |
-|-----------|--------|------|
-| Bipartite graph | Complete | `rl_graph.h/cpp` |
-| State representation | Complete | `rl_state.h` |
-| Reward computation | Complete | `rl_reward.h` |
-| Variable selection (Alg. 3) | Complete | `rl_variable_selection.h` |
-| Solution search (Alg. 1) | Complete | `rl_heuristic.h/cpp` |
-| Training loop (Alg. 2) | Complete | `rl_training.h/cpp` |
-| Feature engineering | Complete | `rl_features.h` |
-| Neural network (LibTorch) | Complete | `rl_agent.h/cpp` |
-| Neural network (CPU fallback) | Complete | `rl_agent.h/cpp` |
-| Build system | Complete | `CMakeLists.txt` |
+### Session 4 (2026-04-23) — LibTorch Integration
+- [x] Implemented Transformer-based GNN actor + critic in LibTorch
+- [x] Changed optimizer to RMSprop, implemented full gradient-based update()
+- [x] Wired agent into heuristic and training loops
 
-**Current Limitations:**
-1. Not yet tested on benchmark instances
-2. CPU fallback uses simplified weight perturbation (not true policy gradient)
-3. GPU acceleration not yet validated
-
-### Session 4 (2026-04-23) - LibTorch Integration (Priority 1)
-- [x] Restructured `rl_agent.h` — renamed CPU classes to `ActorNetworkCPU`/`CriticNetworkCPU`
-- [x] Added LibTorch modules `ActorNetworkTorchImpl` / `CriticNetworkTorchImpl` with `TORCH_MODULE` macros
-- [x] Implemented Transformer-based GNN actor: embedding → TransformerEncoder → action_head
-- [x] Implemented critic: phase_embedding + obj_encoder + constraint_encoder → value_head
-- [x] Changed optimizer from Adam to RMSprop (matching paper specification)
-- [x] Implemented `build_feature_tensor()` and `build_constraint_tensor()` for LibTorch path
-- [x] Implemented `select_actions_training()` with gradient-tracked forward passes
-- [x] Implemented full `update()` with policy gradient loss + TD critic loss + backprop
-- [x] Wired up agent in `rl_heuristic.cpp` — replaced random actions with `agent_.select_actions()`
-- [x] Updated `rl_training.cpp` — collects full trajectory and calls `agent->update()`
-- [x] Fixed `CMakeLists.txt` — removed duplicates, C++17 for LibTorch, propagate USE_LIBTORCH
-- [x] Added `TrainingForwardResult` struct for training-mode forward passes
-- [x] Updated `README.md`, `REPORT.md`, `PSEUDOCODE.md`
+### Session 5 (2026-04-23) — MILP Adaptation + Pipeline Completion
+- [x] **MILP variable selection**: Filtered continuous variables from `select_variables()` — only integer/binary vars selected as seeds/neighbors. `p = log2(n_int)` instead of `log2(n)`
+- [x] **MILP action clamping**: Created `apply_actions_milp()` — skips continuous vars, clamps binary to {0,1}, clamps integer to [lb,ub] and rounds
+- [x] **Integrality check**: Updated `is_feasible()` to verify integer/binary vars have integer values
+- [x] **LP sub-problem**: Created `rl_lp_subproblem.h` using CLP — after fixing integers, solves LP for optimal continuous variable values
+- [x] **Integrated LP sub-problem** into both `rl_heuristic.cpp` and `rl_training.cpp`
+- [x] **Training driver**: Created `main_train.cpp` with CLI flags (--updates, --steps, --batch, --lr, --save, --load), directory scanning for .mps files
+- [x] **Inference driver**: Updated `main_rl.cpp` with model_path argument and variable type reporting
+- [x] **Build system**: Updated `CMakeLists.txt` — builds both `rl_sph_test` and `rl_sph_train`, added stdc++fs for GCC<9, fixed compile definitions syntax
+- [x] **Initialization**: Updated `initialize_solution()` to handle continuous vars (set to lb, only randomize integer/binary)
+- [x] **Syntax review**: Fixed `rl_training.h` signature mismatch, removed dead code in main_train.cpp
+- [x] Updated all documentation (README.md, REPORT.md, PSEUDOCODE.md)
 
 ---
 
-## 12. Next Steps for Full Implementation
+## 12. ILP → MILP Adaptation (Completed)
 
-### ~~Priority 0: LibTorch Integration~~ ✅ COMPLETED (Session 4)
+The RL-SPH paper targets pure ILPs. We adapted for MILPs:
 
-The full Transformer-based Actor-Critic GNN is implemented:
-- Actor: `features(64) → Linear → ReLU → TransformerEncoder(4L, 4H) → Linear → logits(3)`
-- Critic: `phase_emb + obj_emb + constraint_emb → concat → MLP → V(s)`
-- Loss: `L = -log π(a|s)·δ + δ²`, Optimizer: RMSprop (α=0.99, ε=1e-5, lr=1e-4)
-
----
-
-## 13. ILP → MILP Adaptation (Critical Gap)
-
-The RL-SPH paper (Lee & Kim, 2025) is designed for **pure ILPs** where all variables are integer. Our use-case is **MILPs** (Mixed Integer Linear Programs) which contain both integer and continuous variables. This creates several mismatches:
-
-### What's Already Handled
-- Feature engineering (`rl_features.h`) encodes variable type as features (39-40: `is_integer`, `is_binary`)
-- `MIPProblem` stores `VarType` enum (CONTINUOUS, INTEGER, BINARY) for each variable
-
-### What's NOT Yet Handled (Future Work)
-
-| Component | Issue | Fix Required |
-|-----------|-------|-------------|
-| **Variable selection** (`rl_variable_selection.h`) | Continuous variables can be selected as seeds/neighbors | Filter: only select vars where `vartype != CONTINUOUS` |
-| **Action application** (`rl_state.h::apply_actions`) | ±1 applied to continuous variables is meaningless | Skip continuous vars; only modify integer/binary |
-| **Post-action clamping** | No clamping after action | Binary: clamp to {0,1}; Integer: clamp to [lb, ub] and round |
-| **Continuous variable fixing** | Continuous vars are never properly set | After fixing integers, solve LP sub-problem for optimal continuous values |
-| **State evaluation** | Feasibility checked with integers at non-integer values | Add integrality check only for integer/binary variables |
-
-### Proposed Approach for MILP
-1. **Restrict RL agent to integer variables only** — variable selection filters out continuous
-2. **After each RL step**, solve an LP with integer variables fixed to find optimal continuous values
-3. **Use LP reduced costs** as additional features for the RL agent
-4. This is similar to the "fix-and-optimize" approach used in MILP heuristics
+| Change | Status | File |
+|--------|--------|------|
+| Variable selection filters continuous variables | ✅ Done | `rl_variable_selection.h` |
+| `apply_actions_milp()` skips continuous, clamps binary/integer | ✅ Done | `rl_state.h` |
+| `is_feasible()` checks integrality | ✅ Done | `rl_state.h` |
+| LP sub-problem for continuous vars (CLP) | ✅ Done | `rl_lp_subproblem.h` |
+| Initialization handles continuous vars | ✅ Done | `rl_heuristic.cpp` |
+| Feature engineering encodes variable type | ✅ Done | `rl_features.h` |
 
 ---
 
-## 14. Future Priority List
+## 13. Future Priority List
 
-### Priority 1: MILP Adaptation
-- [ ] Filter continuous variables from selection in `rl_variable_selection.h`
-- [ ] Clamp actions to valid bounds in `apply_actions()` — binary stays {0,1}
-- [ ] Solve LP sub-problem for continuous variables after fixing integers
-- [ ] Add LP reduced costs as features for RL agent
-
-### Priority 2: Testing & Validation
-- [ ] Test on benchmark instances (KNAPSACK, MVC, IS, CA, SC, NBI)
+### Priority 1: Testing & Validation
+- [ ] Train on benchmark instances (MPS files)
 - [ ] Add metrics logging — feasibility rate, primal gap, convergence curves
 - [ ] Validate against paper results on ILP benchmarks
 
-### Priority 3: Training Pipeline
+### Priority 2: Training Pipeline Improvements
 - [ ] Experience replay buffer
 - [ ] Batched training for parallel instance simulation
-- [ ] Model checkpointing
+- [ ] Add LP reduced costs as additional features for MILP
 
-### Priority 4: Performance Optimization
+### Priority 3: Performance Optimization
 - [ ] GPU acceleration via LibTorch CUDA tensors
 - [ ] Sparse tensor operations for large-scale MILPs
 - [ ] Multi-threading for variable selection
 
 ---
 
-## 15. Build Instructions
+## 14. Build & Run Instructions
 
-### macOS
-
-```bash
-brew install coin-or-tools
-cd RL && mkdir build && cd build
-cmake ..
-make -j$(nproc)
-```
-
-### Ubuntu/Debian
-
+### Build (Ubuntu/Debian)
 ```bash
 sudo apt-get install -y coinor-libclp-dev coinor-libosi-dev coinor-libcoinutils-dev
-cd RL && mkdir build && cd build
+cd RL && rm -rf build && mkdir build && cd build
 cmake ..
 make -j$(nproc)
 ```
 
-### With LibTorch
-
+### Train
 ```bash
-# Download LibTorch
-wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.2.0%2Bcpu.zip
-unzip libtorch-*.zip
+./rl_sph_train ./training_instances/ --updates 500 --batch 4 --save model.pt
+```
 
-cd RL && rm -rf build && mkdir build && cd build
-cmake -DUSE_LIBTORCH=ON -DCMAKE_PREFIX_PATH=/absolute/path/to/libtorch ..
-make -j$(nproc)
+### Inference
+```bash
+./rl_sph_test problem.mps 60 2000 model.pt
 ```
 
 ---
@@ -380,5 +336,4 @@ make -j$(nproc)
 
 [2] Gasse, M. et al. "Exact combinatorial optimization with graph convolutional neural networks", NeurIPS 2019.
 
-[3] Han, Q. et al. "A GNN-guided predict-and-search framework for MILP", ICLR 2023 (PAS).
-
+[3] Han, Q. et al. "A GNN-guided predict-and-search framework for MILP", ICLR 2023.

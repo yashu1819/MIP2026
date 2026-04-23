@@ -2,16 +2,14 @@
 cmake_minimum_required(VERSION 3.14)
 project(RL_SPH LANGUAGES CXX)
 
-# Default to C++11; upgraded to C++17 when LibTorch is enabled
-set(CMAKE_CXX_STANDARD 11)
+# Default to C++17 (needed for std::filesystem in training driver)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # LibTorch support (optional)
 option(USE_LIBTORCH "Build with LibTorch for full neural network" OFF)
 
 if(USE_LIBTORCH)
-    # LibTorch requires C++17
-    set(CMAKE_CXX_STANDARD 17)
     find_package(Torch REQUIRED)
 endif()
 
@@ -32,6 +30,7 @@ set(RL_SPH_HEADERS
     rl_agent.h
     rl_training.h
     rl_features.h
+    rl_lp_subproblem.h
 )
 
 # MIP Definition library
@@ -46,7 +45,7 @@ target_include_directories(mip_definition PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..
 )
 
-# Find COIN-OR libraries (required by MIP definition)
+# Find COIN-OR libraries (required)
 find_path(OSI_INCLUDE_DIR NAMES coin/OsiClpSolverInterface.hpp)
 find_library(OSICLP_LIBRARY NAMES OsiClp)
 find_library(OSI_LIBRARY NAMES Osi)
@@ -61,9 +60,20 @@ if(OSI_INCLUDE_DIR AND OSICLP_LIBRARY AND OSI_LIBRARY AND CLP_LIBRARY AND COIN_U
         ${CLP_LIBRARY}
         ${COIN_UTILS_LIBRARY}
     )
+else()
+    message(WARNING "COIN-OR libraries not found. Build may fail.")
 endif()
 
-# Main executable
+# Common link libraries
+set(COMMON_LIBS
+    mip_definition
+    ${OSICLP_LIBRARY}
+    ${OSI_LIBRARY}
+    ${CLP_LIBRARY}
+    ${COIN_UTILS_LIBRARY}
+)
+
+# ==================== Inference executable ====================
 add_executable(rl_sph_test
     main_rl.cpp
     ${RL_SPH_SOURCES}
@@ -74,25 +84,45 @@ target_include_directories(rl_sph_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/..
 )
 
-# target_link_libraries(rl_sph_test PRIVATE mip_definition)
-target_link_libraries(rl_sph_test PRIVATE
-    mip_definition
-    ${OSICLP_LIBRARY}
-    ${OSI_LIBRARY}
-    ${CLP_LIBRARY}
-    ${COIN_UTILS_LIBRARY}
-)
+target_link_libraries(rl_sph_test PRIVATE ${COMMON_LIBS})
 
-# Compiler warnings
 target_compile_options(rl_sph_test PRIVATE
     $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -O2>
     $<$<CXX_COMPILER_ID:Clang>:-Wall -Wextra -O2>
     $<$<CXX_COMPILER_ID:MSVC>:/W4 /O2>
 )
 
-# Link LibTorch if enabled
+# ==================== Training executable ====================
+add_executable(rl_sph_train
+    main_train.cpp
+    ${RL_SPH_SOURCES}
+)
+
+target_include_directories(rl_sph_train PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+)
+
+target_link_libraries(rl_sph_train PRIVATE ${COMMON_LIBS})
+
+target_compile_options(rl_sph_train PRIVATE
+    $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -O2>
+    $<$<CXX_COMPILER_ID:Clang>:-Wall -Wextra -O2>
+    $<$<CXX_COMPILER_ID:MSVC>:/W4 /O2>
+)
+
+# ==================== LibTorch linking ====================
 if(USE_LIBTORCH)
     target_link_libraries(rl_sph_test PRIVATE ${TORCH_LIBRARIES})
-    target_compile_definitions(rl_sph_test PRIVATE -DUSE_LIBTORCH)
-    target_compile_definitions(mip_definition PRIVATE -DUSE_LIBTORCH)
+    target_compile_definitions(rl_sph_test PRIVATE USE_LIBTORCH)
+
+    target_link_libraries(rl_sph_train PRIVATE ${TORCH_LIBRARIES})
+    target_compile_definitions(rl_sph_train PRIVATE USE_LIBTORCH)
+
+    target_compile_definitions(mip_definition PRIVATE USE_LIBTORCH)
+endif()
+
+# std::filesystem linkage (GCC < 9 needs explicit -lstdc++fs)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.0")
+    target_link_libraries(rl_sph_train PRIVATE stdc++fs)
 endif()

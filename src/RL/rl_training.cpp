@@ -1,4 +1,5 @@
 #include "rl_training.h"
+#include "rl_lp_subproblem.h"
 #include <iostream>
 #include <chrono>
 #include <cmath>
@@ -78,8 +79,12 @@ double RLTrainer::training_step(const MIPProblem& mip, std::mt19937& rng) {
         TrainingForwardResult fwd = agent_ptr_->select_actions_training(
             state, graph, changeable, phase, rng);
 
-        // Apply actions
-        std::vector<double> x_new = apply_actions(state.x, fwd.actions, changeable);
+        // Apply actions (MILP-aware)
+        std::vector<double> x_new = apply_actions_milp(mip, state.x, fwd.actions, changeable);
+
+        // Solve LP sub-problem for continuous variables
+        solve_lp_subproblem(mip, x_new);
+
         state = create_state(mip, x_new);
 
         // Compute reward
