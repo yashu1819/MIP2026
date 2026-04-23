@@ -287,6 +287,9 @@ std::vector<Action> RLAgent::select_actions(
     const RLState& state, const BipartiteGraph& graph,
     const std::vector<int>& changeable_indices, std::mt19937& rng)
 {
+    // Guard: if no variables to change, return empty
+    if (changeable_indices.empty()) return {};
+
 #ifdef USE_LIBTORCH
     torch::NoGradGuard no_grad;
     auto features = build_feature_tensor(state, graph, changeable_indices);
@@ -336,6 +339,13 @@ TrainingForwardResult RLAgent::select_actions_training(
 {
     TrainingForwardResult result;
     int nc = static_cast<int>(changeable_indices.size());
+
+    // Guard: if no variables to change, return defaults
+    if (nc == 0) {
+        result.log_prob_sum = 0.0f;
+        result.state_value = estimate_value(state, phase);
+        return result;
+    }
 
 #ifdef USE_LIBTORCH
     // Actor forward (with gradients)

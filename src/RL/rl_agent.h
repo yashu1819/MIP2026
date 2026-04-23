@@ -182,14 +182,16 @@ struct CriticNetworkTorchImpl : torch::nn::Module {
         auto phase_idx = torch::tensor({phase}, torch::kLong);
         auto phase_emb = phase_embedding->forward(phase_idx);  // (1, hidden_dim)
 
-        // Objective encoding: (1, hidden_dim)
-        auto obj_emb = torch::relu(obj_encoder->forward(obj.unsqueeze(0)));  // (1, hidden_dim)
+        // Objective encoding: ensure obj is (1, 1) before feeding to linear
+        auto obj_2d = obj.reshape({1, 1});
+        auto obj_emb = torch::relu(obj_encoder->forward(obj_2d));  // (1, hidden_dim)
 
-        // Constraint encoding: (1, hidden_dim)
+        // Constraint encoding: ensure (1, constraint_input_dim)
+        auto constr_2d = constr_features.reshape({1, -1});
         auto constr_emb = torch::relu(
-            constraint_encoder->forward(constr_features.unsqueeze(0)));  // (1, hidden_dim)
+            constraint_encoder->forward(constr_2d));  // (1, hidden_dim)
 
-        // Combine: (1, hidden_dim * 3)
+        // Combine: all are (1, hidden_dim) -> cat -> (1, hidden_dim * 3)
         auto combined = torch::cat({phase_emb, obj_emb, constr_emb}, /*dim=*/1);
 
         // Value estimation: scalar
