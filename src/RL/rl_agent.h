@@ -87,8 +87,7 @@ struct ActorNetworkTorchImpl : torch::nn::Module {
             torch::nn::TransformerEncoderLayer(layer_opts));
 
         // Multi-layer transformer encoder
-        auto encoder_opts = torch::nn::TransformerEncoderOptions(transformer_layer, num_layers)
-            .enable_nested_tensor(false);
+        auto encoder_opts = torch::nn::TransformerEncoderOptions(transformer_layer, num_layers);
         transformer = register_module("transformer",
             torch::nn::TransformerEncoder(encoder_opts));
 
