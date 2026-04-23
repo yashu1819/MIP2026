@@ -1,7 +1,7 @@
 #ifndef MPS_READER_H
 #define MPS_READER_H
 
-#include "../Definition/milp_problem.h"
+#include "../Definition/mip_problem.h"
 #include <string>
 
 namespace milp {
