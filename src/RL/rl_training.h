@@ -95,7 +95,6 @@ private:
     // One training update (Algorithm 2, lines 8-21)
     double training_step(
         const MIPProblem& mip,
-        RLAgent& agent,
         std::mt19937& rng
     );
 

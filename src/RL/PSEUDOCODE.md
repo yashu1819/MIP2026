@@ -830,6 +830,73 @@ FUNCTION UPDATE_POLICY(states, actions, rewards, next_states, phases):
 
 ---
 
+## 8. ILP → MILP Adaptation (Future Work)
+
+**Problem:** The RL-SPH paper assumes all variables are integer. For MILPs, continuous variables must be handled differently.
+
+### 8.1 Modified Variable Selection (TODO)
+
+```
+MODIFIED ALGORITHM 3: Variable Selection for MILP
+
+// Filter: only consider integer/binary variables for RL actions
+integer_vars <- []
+for i in 0 to n-1 do
+    if vartype[i] == INTEGER or vartype[i] == BINARY then
+        integer_vars.append(i)
+
+n_int <- length(integer_vars)
+p <- floor(log2(n_int))
+q <- p
+
+// Seed scoring operates only on integer_vars
+// ... (same as Algorithm 3, but restricted to integer_vars)
+
+return changeable    // Only integer/binary variable indices
+```
+
+### 8.2 Modified Action Application (TODO)
+
+```
+FUNCTION apply_actions_milp(x, actions, changeable, mip):
+    x_new <- copy(x)
+
+    // Apply ±1 only to integer/binary variables
+    for i in 0 to length(changeable)-1 do
+        idx <- changeable[i]
+        if mip.vartype[idx] == CONTINUOUS then
+            continue    // Skip continuous variables
+        x_new[idx] <- x_new[idx] + actions[i]
+
+        // Post-action clamping
+        if mip.vartype[idx] == BINARY then
+            x_new[idx] <- clamp(x_new[idx], 0, 1)
+        else
+            x_new[idx] <- clamp(x_new[idx], mip.lb[idx], mip.ub[idx])
+            x_new[idx] <- round(x_new[idx])
+
+    // Solve LP sub-problem for continuous variables
+    // Fix all integer variables, optimize over continuous
+    x_continuous <- solve_lp_subproblem(mip, x_new, integer_fixed=true)
+    for i in 0 to n-1 do
+        if mip.vartype[i] == CONTINUOUS then
+            x_new[i] <- x_continuous[i]
+
+    return x_new
+```
+
+### 8.3 Additional Features for MILP (TODO)
+
+```
+// Extra features per variable for MILP:
+feature[k]   = lp_reduced_cost[i]      // From LP relaxation
+feature[k+1] = is_at_lp_bound[i]       // 1 if var is at LP bound
+feature[k+2] = lp_relaxation_value[i]  // LP relaxation solution value
+feature[k+3] = fractionality[i]        // |x_LP - round(x_LP)| for integer vars
+```
+
+---
+
 ## Summary of Key Equations
 
 ### State Representation
@@ -856,6 +923,24 @@ FUNCTION UPDATE_POLICY(states, actions, rewards, next_states, phases):
 
 ---
 
+## Implementation Status
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Algorithm 1 (Solution Search) | ✅ Complete | `rl_heuristic.cpp` |
+| Algorithm 2 (Training Loop) | ✅ Complete | `rl_training.cpp` |
+| Algorithm 3 (Variable Selection) | ✅ Complete | `rl_variable_selection.h` |
+| Reward Computation | ✅ Complete | `rl_reward.h` |
+| Actor-Critic (LibTorch) | ✅ Complete | `rl_agent.h/cpp` |
+| Actor-Critic (CPU fallback) | ✅ Complete | `rl_agent.h/cpp` |
+| Feature Engineering | ✅ Complete | `rl_features.h` |
+| MILP Variable Filtering | ❌ TODO | Section 8.1 |
+| MILP Action Clamping | ❌ TODO | Section 8.2 |
+| LP Sub-problem for Continuous | ❌ TODO | Section 8.2 |
+| MILP Extra Features | ❌ TODO | Section 8.3 |
+
+---
+
 ## File Reference
 
 | Algorithm | File | Key Functions |
@@ -864,7 +949,9 @@ FUNCTION UPDATE_POLICY(states, actions, rewards, next_states, phases):
 | Training (Alg 2) | `rl_training.cpp` | `train()`, `training_step()` |
 | Variable Selection (Alg 3) | `rl_variable_selection.h` | `select_variables()` |
 | Reward Computation | `rl_reward.h` | `compute_reward()`, `phase1_reward()`, `phase2_reward()` |
-| State Management | `rl_state.h` | `create_state()`, `is_feasible()` |
+| State Management | `rl_state.h` | `create_state()`, `is_feasible()`, `apply_actions()` |
 | Graph Building | `rl_graph.h/cpp` | `build_graph()` |
 | Features | `rl_features.h` | `build_variable_features()`, `build_constraint_features()` |
-| Agent | `rl_agent.h/cpp` | `select_actions()`, `estimate_value()` |
+| Agent (LibTorch) | `rl_agent.h/cpp` | `select_actions()`, `select_actions_training()`, `update()`, `estimate_value()` |
+| Agent (CPU fallback) | `rl_agent.h/cpp` | `ActorNetworkCPU::forward()`, `CriticNetworkCPU::forward()` |
+

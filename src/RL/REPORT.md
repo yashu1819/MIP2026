@@ -280,126 +280,73 @@ RL/
 
 ## 12. Next Steps for Full Implementation
 
-### ~~Priority 1: LibTorch Integration~~ ✅ COMPLETED (Session 4)
+### ~~Priority 0: LibTorch Integration~~ ✅ COMPLETED (Session 4)
 
-The LibTorch integration is complete. The agent now has:
-
-1. **Install LibTorch**:
-   ```bash
-   # Option A: pip (CPU only)
-   pip3 install torch
-
-   # Option B: Download from https://pytorch.org/get-started/locally/
-
-   # Option C: NVIDIA container (GPU support)
-   docker pull nvcr.io/nvidia/pytorch:24.04-py3
-   ```
-
-2. **Update `CMakeLists.txt`**:
-   ```bash
-   cd build
-   cmake -DUSE_LIBTORCH=ON -DCMAKE_PREFIX_PATH=/path/to/libtorch ..
-   make -j$(nproc)
-   ```
-
-3. **Update `rl_agent.h`** - Add LibTorch includes:
-   ```cpp
-   #ifdef USE_LIBTORCH
-   #include <torch/torch.h>
-   #include <torch/script.h>
-   #endif
-   ```
-
-4. **Implement `ActorNetworkImpl`** as `torch::nn::Module`:
-   ```cpp
-   struct ActorNetworkImpl : torch::nn::Module {
-       torch::nn::Linear var_embedding{nullptr};
-       torch::nn::TransformerEncoder transformer{nullptr};
-       torch::nn::Linear action_head{nullptr};
-
-       ActorNetworkImpl(int input_dim, int hidden_dim, int num_heads, int num_layers) {
-           var_embedding = register_module("var_embedding",
-               torch::nn::Linear(input_dim, hidden_dim));
-           // ... add transformer layers
-           action_head = register_module("action_head",
-               torch::nn::Linear(hidden_dim, 3));  // 3 actions
-       }
-
-       torch::Tensor forward(torch::Tensor x) {
-           x = torch::relu(var_embedding->forward(x));
-           x = transformer->forward(x);
-           return action_head->forward(x);
-       }
-   };
-   ```
-
-5. **Add RMSprop optimizer** in `RLAgent`:
-   ```cpp
-   #ifdef USE_LIBTORCH
-   torch::optim::RMSprop optimizer_;
-   #endif
-   ```
-
-### Priority 2: Testing & Validation
-
-6. **Test on benchmark instances**:
-   ```bash
-   ./rl_sph_test ../test_instances/knapsack.mps 60 2000
-   ```
-
-7. **Add metrics logging**:
-   - Feasibility rate (% instances solved)
-   - Primal gap to optimality
-   - Convergence curves
-
-8. **Validate against paper results**:
-   | Dataset | Expected FR | Expected PG |
-   |---------|-------------|-------------|
-   | IS      | 100%        | 0.14%       |
-   | CA      | 100%        | 3.82%       |
-   | SC      | 100%        | 9.67%       |
-   | MVC     | 100%        | 0.81%       |
-   | NBI     | 100%        | 0.00%       |
-
-### Priority 3: Training Pipeline
-
-9. **Implement experience replay buffer** in `rl_training.h`:
-   ```cpp
-   struct Experience {
-       RLState state;
-       std::vector<Action> actions;
-       double reward;
-       RLState next_state;
-       int phase;
-   };
-   std::deque<Experience> replay_buffer;
-   ```
-
-10. **Add batched training** for parallel instance simulation
-
-11. **Model checkpointing** - save/load trained weights
-
-### Priority 4: Performance Optimization
-
-12. **GPU acceleration** via LibTorch CUDA tensors
-
-13. **Sparse tensor operations** for large-scale MILPs
-
-14. **Multi-threading** for variable selection
+The full Transformer-based Actor-Critic GNN is implemented:
+- Actor: `features(64) → Linear → ReLU → TransformerEncoder(4L, 4H) → Linear → logits(3)`
+- Critic: `phase_emb + obj_emb + constraint_emb → concat → MLP → V(s)`
+- Loss: `L = -log π(a|s)·δ + δ²`, Optimizer: RMSprop (α=0.99, ε=1e-5, lr=1e-4)
 
 ---
 
-## 13. Build Instructions
+## 13. ILP → MILP Adaptation (Critical Gap)
+
+The RL-SPH paper (Lee & Kim, 2025) is designed for **pure ILPs** where all variables are integer. Our use-case is **MILPs** (Mixed Integer Linear Programs) which contain both integer and continuous variables. This creates several mismatches:
+
+### What's Already Handled
+- Feature engineering (`rl_features.h`) encodes variable type as features (39-40: `is_integer`, `is_binary`)
+- `MIPProblem` stores `VarType` enum (CONTINUOUS, INTEGER, BINARY) for each variable
+
+### What's NOT Yet Handled (Future Work)
+
+| Component | Issue | Fix Required |
+|-----------|-------|-------------|
+| **Variable selection** (`rl_variable_selection.h`) | Continuous variables can be selected as seeds/neighbors | Filter: only select vars where `vartype != CONTINUOUS` |
+| **Action application** (`rl_state.h::apply_actions`) | ±1 applied to continuous variables is meaningless | Skip continuous vars; only modify integer/binary |
+| **Post-action clamping** | No clamping after action | Binary: clamp to {0,1}; Integer: clamp to [lb, ub] and round |
+| **Continuous variable fixing** | Continuous vars are never properly set | After fixing integers, solve LP sub-problem for optimal continuous values |
+| **State evaluation** | Feasibility checked with integers at non-integer values | Add integrality check only for integer/binary variables |
+
+### Proposed Approach for MILP
+1. **Restrict RL agent to integer variables only** — variable selection filters out continuous
+2. **After each RL step**, solve an LP with integer variables fixed to find optimal continuous values
+3. **Use LP reduced costs** as additional features for the RL agent
+4. This is similar to the "fix-and-optimize" approach used in MILP heuristics
+
+---
+
+## 14. Future Priority List
+
+### Priority 1: MILP Adaptation
+- [ ] Filter continuous variables from selection in `rl_variable_selection.h`
+- [ ] Clamp actions to valid bounds in `apply_actions()` — binary stays {0,1}
+- [ ] Solve LP sub-problem for continuous variables after fixing integers
+- [ ] Add LP reduced costs as features for RL agent
+
+### Priority 2: Testing & Validation
+- [ ] Test on benchmark instances (KNAPSACK, MVC, IS, CA, SC, NBI)
+- [ ] Add metrics logging — feasibility rate, primal gap, convergence curves
+- [ ] Validate against paper results on ILP benchmarks
+
+### Priority 3: Training Pipeline
+- [ ] Experience replay buffer
+- [ ] Batched training for parallel instance simulation
+- [ ] Model checkpointing
+
+### Priority 4: Performance Optimization
+- [ ] GPU acceleration via LibTorch CUDA tensors
+- [ ] Sparse tensor operations for large-scale MILPs
+- [ ] Multi-threading for variable selection
+
+---
+
+## 15. Build Instructions
 
 ### macOS
 
 ```bash
-# Install COIN-OR dependencies
 brew install coin-or-tools
-
-# Build
-cd RL
-mkdir build && cd build
+cd RL && mkdir build && cd build
 cmake ..
 make -j$(nproc)
 ```
@@ -407,33 +354,21 @@ make -j$(nproc)
 ### Ubuntu/Debian
 
 ```bash
-# Install COIN-OR dependencies
 sudo apt-get install -y coinor-libclp-dev coinor-libosi-dev coinor-libcoinutils-dev
-
-# Build
-cd RL
-mkdir build && cd build
+cd RL && mkdir build && cd build
 cmake ..
 make -j$(nproc)
 ```
 
-### With LibTorch (GPU Support via NVIDIA Container)
+### With LibTorch
 
 ```bash
-# Pull PyTorch container
-docker pull nvcr.io/nvidia/pytorch:24.04-py3
+# Download LibTorch
+wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.2.0%2Bcpu.zip
+unzip libtorch-*.zip
 
-# Run container
-docker run --gpus all -it --rm \
-    -v /path/to/MIP2026:/workspace/MIP2026 \
-    nvcr.io/nvidia/pytorch:24.04-py3
-
-# Inside container:
-cd /workspace/MIP2026/src/RL
-mkdir build && cd build
-
-# Enable LibTorch build
-cmake -DUSE_LIBTORCH=ON ..
+cd RL && rm -rf build && mkdir build && cd build
+cmake -DUSE_LIBTORCH=ON -DCMAKE_PREFIX_PATH=/absolute/path/to/libtorch ..
 make -j$(nproc)
 ```
 
@@ -447,12 +382,3 @@ make -j$(nproc)
 
 [3] Han, Q. et al. "A GNN-guided predict-and-search framework for MILP", ICLR 2023 (PAS).
 
----
-
-## References
-
-[1] Lee, T.-H., Kim, M.-S. "RL-SPH: Learning to Achieve Feasible Solutions for Integer Linear Programs", arXiv:2411.19517v6, 2025.
-
-[2] Gasse, M. et al. "Exact combinatorial optimization with graph convolutional neural networks", NeurIPS 2019.
-
-[3] Han, Q. et al. "A GNN-guided predict-and-search framework for MILP", ICLR 2023 (PAS).

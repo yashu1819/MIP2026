@@ -58,15 +58,13 @@ cmake ..
 make -j$(nproc)
 ```
 
-### Optional: LibTorch for Full Neural Network
-
-To enable the full transformer-based GNN (currently uses random actions):
+### With LibTorch (Full Transformer-based GNN)
 
 ```bash
 # Download LibTorch from https://pytorch.org/get-started/locally/
 # Extract to /path/to/libtorch
 
-cd build
+rm -rf build && mkdir build && cd build
 cmake -DUSE_LIBTORCH=ON -DCMAKE_PREFIX_PATH=/path/to/libtorch ..
 make -j$(nproc)
 ```
@@ -188,45 +186,53 @@ config.gamma = 0.99f;          // Discount factor
 
 ### Current Limitations
 
-1. **Untested**: Not yet validated on benchmark instances.
-2. **CPU fallback**: Uses simplified weight perturbation, not true policy gradient.
-3. **GPU**: Not yet validated with CUDA.
+1. **ILP→MILP gap**: The paper targets pure ILPs (all integer variables). Our use-case is MILPs (mixed integer + continuous). Currently, the RL agent may select continuous variables and apply ±1 actions to them, which is meaningless. See [MILP Adaptation](#milp-adaptation-ilp-to-milp-gap) below.
+2. **Untested**: Not yet validated on benchmark instances.
+3. **CPU fallback**: Uses simplified weight perturbation, not true policy gradient.
+4. **GPU**: Not yet validated with CUDA.
+
+## MILP Adaptation (ILP-to-MILP Gap)
+
+The RL-SPH paper assumes all variables are integer. To handle **Mixed Integer Linear Programs** (continuous + integer variables), the following adaptations are needed:
+
+| Issue | Current Behavior | Required Adaptation |
+|-------|-----------------|---------------------|
+| Variable selection | Selects from ALL variables including continuous | Filter to only integer/binary variables in `rl_variable_selection.h` |
+| Action space | ±1 applied to any variable | Skip continuous variables; only modify integer/binary |
+| Continuous handling | Continuous vars treated same as integer | After fixing integers, solve LP sub-problem for continuous vars |
+| Bound clamping | No post-action clamping | Clamp binary to {0,1}, integer to bounds after each action |
+| Features | Already encodes vartype (features 39-40) | ✅ Already handled |
+
+**Status**: Partially handled. The feature engineering already distinguishes variable types. The core adaptation (filtering continuous variables from selection + LP sub-problem) is **not yet implemented** and is Priority 1 for future work.
 
 ## Next Steps
 
-### ~~Priority 1: LibTorch Integration~~ ✅ COMPLETED
+### ~~LibTorch Integration~~ ✅ COMPLETED
 
-The full Transformer-based Actor-Critic GNN is now implemented.
+### Priority 1: MILP Adaptation
 
-### Priority 1 (NEW): Testing & Validation
+1. **Filter continuous variables** from variable selection in `rl_variable_selection.h`
+2. **Clamp actions** to valid bounds in `apply_actions()` — binary stays {0,1}
+3. **LP sub-problem** — after fixing integers, solve LP for continuous variables
+4. **Adjust features** — add reduced cost from LP relaxation for continuous variables
 
-1. **Test on benchmark instances**:
-   ```bash
-   ./rl_sph_test ../test_instances/knapsack.mps 60 2000
-   ```
+### Priority 2: Testing & Validation
 
-2. **Add metrics logging**:
-   - Feasibility rate (% instances solved)
-   - Primal gap to optimality
-   - Convergence curves
+5. **Test on benchmark instances** (MPS files)
+6. **Add metrics logging** — feasibility rate, primal gap, convergence curves
+7. **Validate against paper results** on ILP benchmarks
 
-3. **Validate against paper results**:
-   | Dataset | Expected FR | Expected PG |
-   |---------|-------------|-------------|
-   | IS      | 100%        | 0.14%       |
-   | CA      | 100%        | 3.82%       |
+### Priority 3: Training Pipeline Improvements
 
-### Priority 2: Training Pipeline Improvements
+8. **Experience replay buffer** in `rl_training.h`
+9. **Batched training** for parallel instance simulation
+10. **Model checkpointing** — save/load trained weights
 
-4. **Experience replay buffer** in `rl_training.h`
-5. **Batched training** for parallel instance simulation
-6. **Model checkpointing** — save/load trained weights
+### Priority 4: Performance Optimization
 
-### Priority 3: Performance Optimization
-
-7. **GPU acceleration** via LibTorch CUDA tensors
-8. **Sparse tensor operations** for large-scale MILPs
-9. **Multi-threading** for variable selection
+11. **GPU acceleration** via LibTorch CUDA tensors
+12. **Sparse tensor operations** for large-scale MILPs
+13. **Multi-threading** for variable selection
 
 ## Troubleshooting
 
