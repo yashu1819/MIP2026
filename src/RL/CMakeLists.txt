@@ -74,7 +74,14 @@ target_include_directories(rl_sph_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/..
 )
 
-target_link_libraries(rl_sph_test PRIVATE mip_definition)
+# target_link_libraries(rl_sph_test PRIVATE mip_definition)
+target_link_libraries(rl_sph_test PRIVATE
+    mip_definition
+    ${OSICLP_LIBRARY}
+    ${OSI_LIBRARY}
+    ${CLP_LIBRARY}
+    ${COIN_UTILS_LIBRARY}
+)
 
 # Compiler warnings
 target_compile_options(rl_sph_test PRIVATE
