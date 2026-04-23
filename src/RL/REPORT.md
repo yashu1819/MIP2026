@@ -252,21 +252,37 @@ RL/
 | Solution search (Alg. 1) | Complete | `rl_heuristic.h/cpp` |
 | Training loop (Alg. 2) | Complete | `rl_training.h/cpp` |
 | Feature engineering | Complete | `rl_features.h` |
-| Neural network | Placeholder | `rl_agent.h/cpp` |
+| Neural network (LibTorch) | Complete | `rl_agent.h/cpp` |
+| Neural network (CPU fallback) | Complete | `rl_agent.h/cpp` |
 | Build system | Complete | `CMakeLists.txt` |
 
 **Current Limitations:**
-1. Neural network uses random actions (placeholder in `rl_agent.cpp`)
-2. Full neural network requires LibTorch installation
-3. Not yet tested on benchmark instances
+1. Not yet tested on benchmark instances
+2. CPU fallback uses simplified weight perturbation (not true policy gradient)
+3. GPU acceleration not yet validated
+
+### Session 4 (2026-04-23) - LibTorch Integration (Priority 1)
+- [x] Restructured `rl_agent.h` — renamed CPU classes to `ActorNetworkCPU`/`CriticNetworkCPU`
+- [x] Added LibTorch modules `ActorNetworkTorchImpl` / `CriticNetworkTorchImpl` with `TORCH_MODULE` macros
+- [x] Implemented Transformer-based GNN actor: embedding → TransformerEncoder → action_head
+- [x] Implemented critic: phase_embedding + obj_encoder + constraint_encoder → value_head
+- [x] Changed optimizer from Adam to RMSprop (matching paper specification)
+- [x] Implemented `build_feature_tensor()` and `build_constraint_tensor()` for LibTorch path
+- [x] Implemented `select_actions_training()` with gradient-tracked forward passes
+- [x] Implemented full `update()` with policy gradient loss + TD critic loss + backprop
+- [x] Wired up agent in `rl_heuristic.cpp` — replaced random actions with `agent_.select_actions()`
+- [x] Updated `rl_training.cpp` — collects full trajectory and calls `agent->update()`
+- [x] Fixed `CMakeLists.txt` — removed duplicates, C++17 for LibTorch, propagate USE_LIBTORCH
+- [x] Added `TrainingForwardResult` struct for training-mode forward passes
+- [x] Updated `README.md`, `REPORT.md`, `PSEUDOCODE.md`
 
 ---
 
 ## 12. Next Steps for Full Implementation
 
-### Priority 1: LibTorch Integration (Required)
+### ~~Priority 1: LibTorch Integration~~ ✅ COMPLETED (Session 4)
 
-The current implementation has all algorithmic components complete but uses random actions. To enable the full transformer-based GNN:
+The LibTorch integration is complete. The agent now has:
 
 1. **Install LibTorch**:
    ```bash

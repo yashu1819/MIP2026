@@ -20,11 +20,11 @@ The heuristic uses a Transformer-based GNN with Actor-Critic reinforcement learn
 | `rl_reward.h` | Two-phase reward computation | Complete |
 | `rl_variable_selection.h` | Variable selection (Algorithm 3) | Complete |
 | `rl_heuristic.h/cpp` | Main heuristic (Algorithm 1) | Complete |
-| `rl_agent.h/cpp` | Actor-Critic GNN agent | Placeholder (random actions) |
+| `rl_agent.h/cpp` | Actor-Critic GNN agent (LibTorch + CPU fallback) | Complete |
 | `rl_training.h/cpp` | Training loop (Algorithm 2) | Complete |
 | `rl_features.h` | Neural network input features (64-dim var, 32-dim constraint) | Complete |
 | `main_rl.cpp` | Test driver | Complete |
-| `CMakeLists.txt` | Build configuration | Complete |
+| `CMakeLists.txt` | Build configuration (C++11 / C++17 with LibTorch) | Complete |
 | `REPORT.md` | Detailed paper summary and implementation notes | Complete |
 | `README.md` | This file | Complete |
 
@@ -182,89 +182,51 @@ config.gamma = 0.99f;          // Discount factor
 | Solution search (Alg. 1) | `rl_heuristic.h/cpp` | Complete |
 | Training loop (Alg. 2) | `rl_training.h/cpp` | Complete |
 | Feature engineering | `rl_features.h` | Complete |
+| Actor-Critic NN (LibTorch) | `rl_agent.h/cpp` | Complete |
+| Actor-Critic NN (CPU fallback) | `rl_agent.h/cpp` | Complete |
 | Build system | `CMakeLists.txt` | Complete |
 
 ### Current Limitations
 
-1. **Neural Network Placeholder**: The actor-critic agent (`rl_agent.h/cpp`) uses random actions. Full implementation requires LibTorch.
-2. **CPU Only**: No GPU acceleration without LibTorch.
-3. **Untested**: The heuristic logic is complete but not yet validated on benchmark instances.
+1. **Untested**: Not yet validated on benchmark instances.
+2. **CPU fallback**: Uses simplified weight perturbation, not true policy gradient.
+3. **GPU**: Not yet validated with CUDA.
 
 ## Next Steps
 
-### Priority 1: LibTorch Integration (Required for Full Functionality)
+### ~~Priority 1: LibTorch Integration~~ ✅ COMPLETED
 
-1. **Install LibTorch**:
-   ```bash
-   # Option A: pip (CPU only)
-   pip3 install torch
+The full Transformer-based Actor-Critic GNN is now implemented.
 
-   # Option B: Download from https://pytorch.org/get-started/locally/
-   # Option C: NVIDIA container (GPU support)
-   docker pull nvcr.io/nvidia/pytorch:24.04-py3
-   ```
+### Priority 1 (NEW): Testing & Validation
 
-2. **Update `rl_agent.h`** - Add LibTorch includes:
-   ```cpp
-   #ifdef USE_LIBTORCH
-   #include <torch/torch.h>
-   #include <torch/script.h>
-   #endif
-   ```
-
-3. **Implement `ActorNetworkImpl`** as `torch::nn::Module`:
-   ```cpp
-   struct ActorNetworkImpl : torch::nn::Module {
-       torch::nn::Linear var_embedding{nullptr};
-       torch::nn::TransformerEncoder transformer{nullptr};
-       torch::nn::Linear action_head{nullptr};
-
-       ActorNetworkImpl(int input_dim, int hidden_dim, int num_heads, int num_layers) {
-           var_embedding = register_module("var_embedding",
-               torch::nn::Linear(input_dim, hidden_dim));
-           // ... add transformer layers
-           action_head = register_module("action_head",
-               torch::nn::Linear(hidden_dim, 3));  // 3 actions
-       }
-
-       torch::Tensor forward(torch::Tensor x) {
-           x = torch::relu(var_embedding->forward(x));
-           x = transformer->forward(x);
-           return action_head->forward(x);
-       }
-   };
-   ```
-
-4. **Add RMSprop optimizer** in `RLAgent`:
-   ```cpp
-   #ifdef USE_LIBTORCH
-   torch::optim::RMSprop optimizer_;
-   #endif
-   ```
-
-### Priority 2: Testing & Validation
-
-5. **Test on benchmark instances**:
+1. **Test on benchmark instances**:
    ```bash
    ./rl_sph_test ../test_instances/knapsack.mps 60 2000
    ```
 
-6. **Add metrics logging**:
-   - Feasibility rate
-   - Primal gap
+2. **Add metrics logging**:
+   - Feasibility rate (% instances solved)
+   - Primal gap to optimality
    - Convergence curves
 
-### Priority 3: Training Pipeline
+3. **Validate against paper results**:
+   | Dataset | Expected FR | Expected PG |
+   |---------|-------------|-------------|
+   | IS      | 100%        | 0.14%       |
+   | CA      | 100%        | 3.82%       |
 
-7. **Implement experience replay buffer** in `rl_training.h`
-8. **Add batched training** for parallel instance simulation
-9. **Model checkpointing** - save/load trained weights
+### Priority 2: Training Pipeline Improvements
 
-### Priority 4: Performance Optimization
+4. **Experience replay buffer** in `rl_training.h`
+5. **Batched training** for parallel instance simulation
+6. **Model checkpointing** — save/load trained weights
 
-10. **GPU acceleration** via LibTorch CUDA tensors
-11. **Sparse tensor operations** for large-scale MILPs
-12. **Multi-threading** for variable selection
+### Priority 3: Performance Optimization
+
+7. **GPU acceleration** via LibTorch CUDA tensors
+8. **Sparse tensor operations** for large-scale MILPs
+9. **Multi-threading** for variable selection
 
 ## Troubleshooting
 

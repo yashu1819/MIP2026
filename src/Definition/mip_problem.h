@@ -60,7 +60,7 @@ bool check_feasible(
 private:
     // helpers
     void ensure_col(int col);
-    void add_row_sparse(const std::vector<std::pair<int,double>>& entries, char sense, double rhs);
+    void add_row_sparse(const std::vector<std::pair<int,double> >& entries, char sense, double rhs);
 };
 
 #endif

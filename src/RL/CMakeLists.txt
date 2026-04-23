@@ -2,8 +2,18 @@
 cmake_minimum_required(VERSION 3.14)
 project(RL_SPH LANGUAGES CXX)
 
+# Default to C++11; upgraded to C++17 when LibTorch is enabled
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# LibTorch support (optional)
+option(USE_LIBTORCH "Build with LibTorch for full neural network" OFF)
+
+if(USE_LIBTORCH)
+    # LibTorch requires C++17
+    set(CMAKE_CXX_STANDARD 17)
+    find_package(Torch REQUIRED)
+endif()
 
 # RL-SPH source files
 set(RL_SPH_SOURCES
@@ -73,22 +83,9 @@ target_compile_options(rl_sph_test PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/W4 /O2>
 )
 
-# LibTorch support (optional)
-option(USE_LIBTORCH "Build with LibTorch for full neural network" OFF)
+# Link LibTorch if enabled
 if(USE_LIBTORCH)
-    find_package(Torch REQUIRED)
     target_link_libraries(rl_sph_test PRIVATE ${TORCH_LIBRARIES})
     target_compile_definitions(rl_sph_test PRIVATE -DUSE_LIBTORCH)
+    target_compile_definitions(mip_definition PRIVATE -DUSE_LIBTORCH)
 endif()
-
-# Compiler warnings
-target_compile_options(rl_sph_test PRIVATE
-    $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -O2>
-    $<$<CXX_COMPILER_ID:Clang>:-Wall -Wextra -O2>
-    $<$<CXX_COMPILER_ID:MSVC>:/W4 /O2>
-)
-
-# Optional: Build with LibTorch for neural network (future)
-# Uncomment when implementing the full neural network
-# find_package(Torch REQUIRED)
-# target_link_libraries(rl_sph_test PRIVATE ${TORCH_LIBRARIES})
