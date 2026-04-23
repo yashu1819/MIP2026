@@ -62,10 +62,10 @@ make -j$(nproc)
 
 ```bash
 # Download LibTorch from https://pytorch.org/get-started/locally/
-# Extract to /path/to/libtorch
+# Extract to /path/to/libtorch (generally /home/ubuntu/libtorch)
 
 rm -rf build && mkdir build && cd build
-cmake -DUSE_LIBTORCH=ON -DCMAKE_PREFIX_PATH=/path/to/libtorch ..
+cmake -DUSE_LIBTORCH=ON -DCMAKE_PREFIX_PATH=/home/ubuntu/libtorch ..
 make -j$(nproc)
 ```
 
