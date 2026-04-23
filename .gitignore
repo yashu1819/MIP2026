@@ -1,3 +1,4 @@
 *.mps
 *.tex
 /src/general_rounding/Summary_Generalrounding.txt
+build/
