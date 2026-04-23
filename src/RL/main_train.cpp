@@ -24,20 +24,26 @@
 //   ./rl_sph_train a.mps b.mps c.mps --updates 1000 --save my_model.pt
 //   ./rl_sph_train ./instances/ --updates 500 --batch 4 --lr 0.0001
 
-// Collect all .mps files from a directory
+// Collect all .mps and .mps.gz files from a directory
 std::vector<std::string> collect_mps_files(const std::string& path) {
     std::vector<std::string> files;
 
-    // Check if path is a directory
-    // Use C++17 filesystem if available, otherwise treat as single file
+    // Helper to check if a filename ends with .mps or .mps.gz
+    auto is_mps_file = [](const std::string& fname) -> bool {
+        if (fname.size() >= 7 && fname.substr(fname.size() - 7) == ".mps.gz") return true;
+        if (fname.size() >= 4 && fname.substr(fname.size() - 4) == ".mps") return true;
+        if (fname.size() >= 4 && fname.substr(fname.size() - 4) == ".MPS") return true;
+        if (fname.size() >= 7 && fname.substr(fname.size() - 7) == ".MPS.GZ") return true;
+        return false;
+    };
+
+    // Check if path is a directory (C++17 filesystem)
 #if __cplusplus >= 201703L
     namespace fs = std::filesystem;
     if (fs::is_directory(path)) {
         for (const auto& entry : fs::directory_iterator(path)) {
             std::string fname = entry.path().string();
-            if (fname.size() >= 4 &&
-                (fname.substr(fname.size() - 4) == ".mps" ||
-                 fname.substr(fname.size() - 4) == ".MPS")) {
+            if (is_mps_file(fname)) {
                 files.push_back(fname);
             }
         }
