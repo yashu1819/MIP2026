@@ -1,2 +1,0 @@
-/Library/Developer/CommandLineTools/usr/bin/ar qc libmip_definition.a "CMakeFiles/mip_definition.dir/Users/Rehan/Downloads/BTP-II/MIP2026/src/Definition/mip_problem.cpp.o" "CMakeFiles/mip_definition.dir/Users/Rehan/Downloads/BTP-II/MIP2026/src/Utiils/mps_reader.cpp.o"
-/Library/Developer/CommandLineTools/usr/bin/ranlib libmip_definition.a
