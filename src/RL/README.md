@@ -67,6 +67,8 @@ make -j$(nproc)
 rm -rf build && mkdir build && cd build
 cmake -DUSE_LIBTORCH=ON -DCMAKE_PREFIX_PATH=/home/ubuntu/libtorch ..
 make -j$(nproc)
+
+# Running these commands will make a executable file rl_sph_test inside build directory
 ```
 
 ## Usage
