@@ -75,7 +75,7 @@ unzip libtorch-*.zip
 
 cd RL/
 rm -rf build && mkdir build && cd build
-cmake -DUSE_LIBTORCH=ON -DCMAKE_PREFIX_PATH=/absolute/path/to/libtorch ..
+cmake -DUSE_LIBTORCH=ON -DCMAKE_PREFIX_PATH=/home/ubuntu/libtorch ..
 make -j$(nproc)
 ```
 
