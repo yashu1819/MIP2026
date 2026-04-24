@@ -10,7 +10,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(USE_LIBTORCH "Build with LibTorch for full neural network" OFF)
 
 if(USE_LIBTORCH)
+    # Find LibTorch - expects TORCH_INSTALL_PREFIX to be set or libtorch in CMAKE_PREFIX_PATH
+    # On Ubuntu: cmake -DUSE_LIBTORCH=ON -DCMAKE_PREFIX_PATH=/path/to/libtorch ..
     find_package(Torch REQUIRED)
+
+    # Set additional compiler flags for LibTorch
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+
+    # Define USE_LIBTORCH globally
+    add_definitions(-DUSE_LIBTORCH)
 endif()
 
 # RL-SPH source files
@@ -114,13 +122,19 @@ target_compile_options(rl_sph_train PRIVATE
 
 # ==================== LibTorch linking ====================
 if(USE_LIBTORCH)
-    target_link_libraries(rl_sph_test PRIVATE ${TORCH_LIBRARIES})
-    target_compile_definitions(rl_sph_test PRIVATE USE_LIBTORCH)
+    # Link LibTorch to both executables
+    target_link_libraries(rl_sph_test PRIVATE "${TORCH_LIBRARIES}")
+    target_link_libraries(rl_sph_train PRIVATE "${TORCH_LIBRARIES}")
 
-    target_link_libraries(rl_sph_train PRIVATE ${TORCH_LIBRARIES})
-    target_compile_definitions(rl_sph_train PRIVATE USE_LIBTORCH)
+    # Include LibTorch headers
+    target_include_directories(rl_sph_test PRIVATE ${TORCH_INCLUDE_DIRS})
+    target_include_directories(rl_sph_train PRIVATE ${TORCH_INCLUDE_DIRS})
 
-    target_compile_definitions(mip_definition PRIVATE USE_LIBTORCH)
+    # Link C++ ABI library for LibTorch compatibility on Linux
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_link_libraries(rl_sph_test PRIVATE torch torch_cpu c10)
+        target_link_libraries(rl_sph_train PRIVATE torch torch_cpu c10)
+    endif()
 endif()
 
 # std::filesystem linkage (GCC < 9 needs explicit -lstdc++fs)
