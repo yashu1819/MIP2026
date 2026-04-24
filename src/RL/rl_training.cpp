@@ -1,5 +1,6 @@
 #include "rl_training.h"
 #include "rl_lp_subproblem.h"
+#include "rl_logger.h"
 #include <iostream>
 #include <chrono>
 #include <cmath>
@@ -45,10 +46,18 @@ void RLTrainer::log_progress(int update_num, const TrainingStats& stats) {
 }
 
 // One training episode — collects trajectory and calls agent.update()
-double RLTrainer::training_step(const MIPProblem& mip, std::mt19937& rng) {
+// Now returns EpisodeStats for detailed diagnostics
+EpisodeStats RLTrainer::training_episode(const MIPProblem& mip, std::mt19937& rng) {
+    EpisodeStats es;
+    double ep_start = get_time_seconds();
+
     static int prev_num_ones = 0;
     std::vector<double> x = initialize_solution(mip, rng, prev_num_ones);
     RLState state = create_state(mip, x);
+
+    // Record initial violations
+    es.constraint_violations_start = count_violated_constraints(mip, state);
+    es.bound_violations_start      = count_violated_bounds(mip, state);
 
     std::vector<double> incumbent;
     double obj_incumbent = std::numeric_limits<double>::infinity();
@@ -68,6 +77,9 @@ double RLTrainer::training_step(const MIPProblem& mip, std::mt19937& rng) {
 
     double total_reward = 0.0;
     int step = 0;
+
+    // Detailed step-level logging interval (every 10% of max_steps)
+    int step_log_interval = std::max(1, config_.max_steps / 10);
 
     while (step < config_.max_steps) {
         RLState prev_state = state;
@@ -91,11 +103,40 @@ double RLTrainer::training_step(const MIPProblem& mip, std::mt19937& rng) {
         double reward = reward_computer.compute_reward(prev_state, state, obj_incumbent, phase);
         total_reward += reward;
 
+        // Track reward stats
+        es.min_reward = std::min(es.min_reward, reward);
+        es.max_reward = std::max(es.max_reward, reward);
+        es.sum_reward += reward;
+
         // Update incumbent
         bool feasible = is_feasible(mip, state);
+        if (feasible) es.feasible_count++;
+
         if (feasible && state.obj < obj_incumbent) {
             incumbent = state.x;
             obj_incumbent = state.obj;
+            es.incumbent_updates++;
+            es.best_obj = std::min(es.best_obj, state.obj);
+
+            // Record incumbent improvement
+            IncumbentRecord rec;
+            rec.obj_value = state.obj;
+            rec.timestamp = get_time_seconds() - ep_start;
+            rec.step      = step;
+            rec.phase     = phase;
+            rec.feasible  = true;
+            es.incumbent_trace.push_back(rec);
+        }
+
+        // Phase tracking
+        if (phase == 1) es.phase1_steps++;
+        else            es.phase2_steps++;
+
+        // Step-level logging during training (verbose level 2)
+        if (config_.verbose && config_.log_interval <= 5 && step % step_log_interval == 0) {
+            print_training_step(step, phase, reward, state.obj,
+                                feasible, obj_incumbent,
+                                static_cast<int>(changeable.size()));
         }
 
         // Store trajectory (no rollback during training — paper Algorithm 2)
@@ -121,21 +162,43 @@ double RLTrainer::training_step(const MIPProblem& mip, std::mt19937& rng) {
     // Add final state for value bootstrapping
     traj_states.push_back(state);
 
+    // Record final violations
+    es.constraint_violations_end = count_violated_constraints(mip, state);
+    es.bound_violations_end      = count_violated_bounds(mip, state);
+
     // Gradient update using collected trajectory
     agent_ptr_->update(
         traj_states, traj_actions, traj_rewards,
         traj_phases, traj_changeable, graph, config_.gamma);
 
-    return total_reward;
+    es.total_reward    = total_reward;
+    es.total_steps     = step;
+    es.elapsed_seconds = get_time_seconds() - ep_start;
+
+    return es;
+}
+
+// Legacy wrapper — keeps old interface working
+double RLTrainer::training_step(const MIPProblem& mip, std::mt19937& rng) {
+    EpisodeStats es = training_episode(mip, rng);
+    return es.total_reward;
 }
 
 TrainingStats RLTrainer::train_on_instance(const MIPProblem& mip, int instance_idx) {
     TrainingStats stats;
     double start_time = get_time_seconds();
-    double total_reward = training_step(mip, rng_);
-    stats.avg_reward = total_reward;
+    EpisodeStats es = training_episode(mip, rng_);
+    stats.avg_reward = es.total_reward;
     stats.avg_time_per_update = get_time_seconds() - start_time;
     stats.total_updates = 1;
+    stats.feasible_solutions_found = es.incumbent_updates;
+    stats.avg_feasibility_rate = (es.total_steps > 0)
+        ? static_cast<double>(es.feasible_count) / es.total_steps : 0.0;
+    stats.avg_objective = es.best_obj;
+
+    // Store episode stats for later retrieval
+    last_episode_stats_ = es;
+
     (void)instance_idx;
     return stats;
 }
@@ -146,21 +209,36 @@ TrainingStats RLTrainer::train() {
 
     // Load training instances
     std::vector<MIPProblem> instances;
+    if (config_.verbose) {
+        print_training_banner();
+        std::cout << "  Loading training instances..." << std::endl;
+    }
+
     for (const auto& file : config_.training_files) {
         try {
             MIPProblem mip;
             mip.load_from_mps(file);
             mip.finalize();
             instances.push_back(mip);
+            if (config_.verbose) {
+                std::cout << "    ✓ Loaded: " << file
+                          << " (" << mip.num_cols << " vars, "
+                          << mip.num_rows << " constrs)" << std::endl;
+            }
         } catch (const std::exception& e) {
             if (config_.verbose)
-                std::cerr << "Warning: Failed to load " << file << ": " << e.what() << std::endl;
+                std::cerr << "    ✗ Failed: " << file << ": " << e.what() << std::endl;
         }
     }
 
     if (instances.empty()) {
         if (config_.verbose) std::cerr << "No training instances loaded." << std::endl;
         return overall_stats;
+    }
+
+    if (config_.verbose) {
+        std::cout << "  Instances loaded: " << instances.size() << std::endl;
+        print_thin_separator();
     }
 
     // Initialize agent
@@ -172,12 +250,34 @@ TrainingStats RLTrainer::train() {
         ac.rmsprop_epsilon = config_.rmsprop_epsilon;
         ac.weight_decay = config_.weight_decay;
         agent_ptr_ = new RLAgent(nv, nc, ac);
+
+        if (config_.verbose) {
+            std::cout << "  Agent initialized (vars=" << nv
+                      << ", constrs=" << nc << ")" << std::endl;
+        }
     }
+
+    // Print table header
+    if (config_.verbose) {
+        std::cout << std::endl;
+        print_training_update_header();
+    }
+
+    // Reward history for trend analysis
+    std::vector<double> reward_history;
+    int total_feasible_found = 0;
+
+    // Accumulate episode stats across all updates for periodic summary
+    EpisodeStats accumulated_es;
 
     // Training loop (Algorithm 2)
     for (int update = 0; update < config_.num_updates; ++update) {
         std::uniform_int_distribution<size_t> dist(0, instances.size() - 1);
         double batch_reward = 0.0;
+        int batch_feasible = 0;
+        int batch_rollbacks = 0;
+        int batch_p1 = 0, batch_p2 = 0;
+        double batch_best_obj = std::numeric_limits<double>::infinity();
 
         for (int b = 0; b < config_.batch_size; ++b) {
             size_t idx = dist(rng_);
@@ -185,24 +285,63 @@ TrainingStats RLTrainer::train() {
             agent_ptr_->set_mip_problem(instances[idx]);
             TrainingStats ist = train_on_instance(instances[idx], static_cast<int>(idx));
             batch_reward += ist.avg_reward;
+
+            // Aggregate episode-level stats
+            batch_feasible += last_episode_stats_.feasible_count;
+            batch_rollbacks += last_episode_stats_.rollback_count;
+            batch_p1 += last_episode_stats_.phase1_steps;
+            batch_p2 += last_episode_stats_.phase2_steps;
+            if (last_episode_stats_.best_obj < batch_best_obj)
+                batch_best_obj = last_episode_stats_.best_obj;
+            total_feasible_found += last_episode_stats_.incumbent_updates;
+
+            // Print detailed episode summary periodically
+            if (config_.verbose && config_.log_interval <= 5) {
+                print_episode_summary(last_episode_stats_,
+                                      update * config_.batch_size + b);
+            }
         }
 
+        double avg_batch_reward = batch_reward / config_.batch_size;
         overall_stats.avg_reward = (overall_stats.avg_reward * update + batch_reward) / (update + 1);
         overall_stats.total_updates = update + 1;
+        overall_stats.feasible_solutions_found = total_feasible_found;
 
+        reward_history.push_back(avg_batch_reward);
+
+        // Print compact update row
         if (config_.verbose && update % config_.log_interval == 0) {
             double elapsed = get_time_seconds() - total_start;
-            std::cout << "Update " << update << ": avg_reward=" << overall_stats.avg_reward
-                      << ", time=" << elapsed << "s" << std::endl;
+            print_training_update_row(
+                update, avg_batch_reward, batch_best_obj,
+                batch_feasible, batch_rollbacks,
+                batch_p1, batch_p2, elapsed);
         }
 
         TrainingStats step_stats;
-        step_stats.avg_reward = batch_reward / config_.batch_size;
+        step_stats.avg_reward = avg_batch_reward;
         step_stats.total_updates = update + 1;
+        step_stats.feasible_solutions_found = batch_feasible;
         history_.push_back(step_stats);
     }
 
-    if (!config_.save_path.empty()) save_model(config_.save_path);
+    // Final summary
+    double total_time = get_time_seconds() - total_start;
+    if (config_.verbose) {
+        print_training_final_summary(
+            config_.num_updates, total_time,
+            overall_stats.avg_reward,
+            reward_history,
+            total_feasible_found);
+    }
+
+    if (!config_.save_path.empty()) {
+        save_model(config_.save_path);
+        if (config_.verbose) {
+            std::cout << "  Model saved to: " << config_.save_path << std::endl;
+        }
+    }
+
     return overall_stats;
 }
 
