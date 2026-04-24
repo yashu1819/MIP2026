@@ -119,6 +119,7 @@ inline double RewardComputer::phase1_reward(
     const RLState& state_curr,
     double obj_incumbent
 ) {
+    (void)obj_incumbent;
     double r_bound = bound_reward(state_curr);
     double r_const = constraint_reward(state_prev, state_curr);
     double delta_obj = normalize_obj_delta(state_prev.obj, state_curr.obj);

@@ -94,6 +94,7 @@ inline double compute_primal_integral(
 //  Constraint / bound violation helpers
 // ============================================================
 inline int count_violated_constraints(const MIPProblem& mip, const RLState& state, double tol = 1e-6) {
+    (void)mip;
     int cnt = 0;
     for (int j = 0; j < state.m; ++j)
         if (state.f[j] < -tol) ++cnt;

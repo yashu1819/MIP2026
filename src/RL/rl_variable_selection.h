@@ -214,7 +214,7 @@ inline std::vector<int> VariableSelector::sample_weighted(
     std::uniform_real_distribution<double> dist(0.0, total);
     std::vector<bool> selected(n, false);
 
-    while (result.size() < static_cast<size_t>(k) && result.size() < n) {
+    while (result.size() < static_cast<size_t>(k) && result.size() < static_cast<size_t>(n)) {
         double r = dist(rng_);
         double cumsum = 0.0;
         for (int i = 0; i < n; ++i) {

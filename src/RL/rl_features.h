@@ -209,6 +209,7 @@ inline VariableFeatures FeatureBuilder::build_variable_features(
     const RLState& state,
     const std::vector<double>& scaled_A
 ) {
+    (void)scaled_A;
     VariableFeatures vf;
     vf.num_vars = num_vars_;
     vf.features.resize(num_vars_ * VAR_FEATURE_DIM, 0.0f);
@@ -316,6 +317,7 @@ inline ConstraintFeatures FeatureBuilder::build_constraint_features(
                                           CONST_FEATURE_DIM - 6);
         for (int k = 0; k < max_vars_to_encode; ++k) {
             int var_idx = vars[k];
+            (void)var_idx;
             // Find coefficient in scaled_A (simplified - would need proper lookup)
             float coeff = 1.0f;  // Placeholder
             f[idx++] = coeff;

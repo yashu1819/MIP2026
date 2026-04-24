@@ -31,6 +31,7 @@ set(RL_SPH_HEADERS
     rl_training.h
     rl_features.h
     rl_lp_subproblem.h
+    rl_logger.h
 )
 
 # MIP Definition library

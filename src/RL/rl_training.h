@@ -3,6 +3,7 @@
 
 #include "rl_agent.h"
 #include "rl_heuristic.h"
+#include "rl_logger.h" 
 #include "../Definition/mip_problem.h"
 #include <vector>
 #include <string>
@@ -92,8 +93,15 @@ private:
     std::mt19937 rng_;
     std::vector<TrainingStats> history_;
 
+    EpisodeStats last_episode_stats_;
+
     // One training update (Algorithm 2, lines 8-21)
     double training_step(
+        const MIPProblem& mip,
+        std::mt19937& rng
+    );
+
+    EpisodeStats training_episode(
         const MIPProblem& mip,
         std::mt19937& rng
     );
