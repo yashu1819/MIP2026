@@ -1,6 +1,7 @@
 #include "mip_problem.h"
 #include <limits>
 #include "feasibility_jump.h"
+#include "parallel_kopt.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -100,6 +101,17 @@ int main(int argc, char** argv) {
     }
 
     timing_file.close();
+
+    // ---------------- PARALLEL ADAPTIVE K-OPT ----------------
+    if (sol.feasible && elapsed < 300.0) {
+        KOptParams kopt_params;
+        kopt_params.time_limit = 300.0; // The run function uses getTime() - t_start
+        
+        ParallelKOpt kopt(prob);
+        // Start from solution_2.sol, passing the overall start time and input time
+        kopt.run(sol, kopt_params, output_dir, t_start, input_time, 2);
+    }
+
 
     return 0;
 }

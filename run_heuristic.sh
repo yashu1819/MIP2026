@@ -8,6 +8,7 @@ fi
 
 INSTANCE_NAME=$1
 OUTPUT_DIR=$2
+rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
 # Run your solver
  ./fj_solver "$INSTANCE_NAME" "$OUTPUT_DIR"
