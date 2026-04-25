@@ -91,9 +91,11 @@ Before running inference, you must train the model on training MPS files:
 ```bash
 # Train on a directory of MPS files
 ./rl_sph_train ./training_instances/ --updates 500 --batch 4 --save model.pt
+# eg. ./rl_sph_train ../../../test_set/instances/ --updates 1
 
 # Train on specific files
 ./rl_sph_train a.mps b.mps c.mps --updates 1000 --save model.pt
+#eg. ./rl_sph_train ../../../test_set/instances/instance_01.mps.gz ../../../test_set/instances/instance_25.mps.gz ../../../test_set/instances/instance_26.mps.gz --updates 1
 ```
 
 **Training flags:**

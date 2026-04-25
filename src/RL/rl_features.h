@@ -129,27 +129,80 @@ inline FeatureBuilder::FeatureBuilder(
     }
 }
 
+// inline std::vector<float> FeatureBuilder::periodic_embed(double value) {
+//     // Periodic embedding: PE(z) = concat(sin(2*pi*w_i*z), cos(2*pi*w_i*z))
+//     // Using frequencies w_i = 2^i for i = 0, ..., k-1
+//     int k = PERIODIC_EMBED_DIM / 2;
+//     std::vector<float> embedding(PERIODIC_EMBED_DIM);
+
+//     for (int i = 0; i < k; ++i) {
+//         float freq = std::pow(2.0f, static_cast<float>(i));
+//         float angle = 2.0f * static_cast<float>(M_PI) * freq * static_cast<float>(value);
+//         embedding[i] = std::sin(angle);
+//         embedding[k + i] = std::cos(angle);
+//     }
+
+//     return embedding;
+// }
+
 inline std::vector<float> FeatureBuilder::periodic_embed(double value) {
-    // Periodic embedding: PE(z) = concat(sin(2*pi*w_i*z), cos(2*pi*w_i*z))
-    // Using frequencies w_i = 2^i for i = 0, ..., k-1
+    // Clamp value to reasonable range to prevent overflow
+    double clamped_value = value;
+    if (std::isnan(clamped_value) || std::isinf(clamped_value)) {
+        clamped_value = 0.0;
+    }
+    // Clamp to [-1e6, 1e6] to prevent extreme frequencies from causing issues
+    clamped_value = std::max(-1e6, std::min(1e6, clamped_value));
+    
     int k = PERIODIC_EMBED_DIM / 2;
-    std::vector<float> embedding(PERIODIC_EMBED_DIM);
+    std::vector<float> embedding(PERIODIC_EMBED_DIM, 0.0f);
 
     for (int i = 0; i < k; ++i) {
         float freq = std::pow(2.0f, static_cast<float>(i));
-        float angle = 2.0f * static_cast<float>(M_PI) * freq * static_cast<float>(value);
-        embedding[i] = std::sin(angle);
-        embedding[k + i] = std::cos(angle);
+        // Cap frequency to prevent overflow
+        if (freq > 1e4f) freq = 1e4f;
+        
+        double angle = 2.0 * M_PI * freq * clamped_value;
+        // Use double for intermediate calculation, then cast to float
+        double sin_val = std::sin(angle);
+        double cos_val = std::cos(angle);
+        
+        embedding[i] = static_cast<float>(sin_val);
+        embedding[k + i] = static_cast<float>(cos_val);
+        
+        // Safety check
+        if (std::isnan(embedding[i]) || std::isinf(embedding[i])) {
+            embedding[i] = 0.0f;
+        }
+        if (std::isnan(embedding[k + i]) || std::isinf(embedding[k + i])) {
+            embedding[k + i] = 0.0f;
+        }
     }
 
     return embedding;
 }
 
+// inline std::vector<float> FeatureBuilder::scale_objective_coeffs() const {
+//     // Scale c to [-1, 1]: c_scaled = c / max(|c|)
+//     std::vector<float> scaled_c(num_vars_);
+
+//     for (int i = 0; i < num_vars_; ++i) {
+//         scaled_c[i] = static_cast<float>(mip_.c[i]) / max_c_;
+//     }
+//     return scaled_c;
+// }
 inline std::vector<float> FeatureBuilder::scale_objective_coeffs() const {
-    // Scale c to [-1, 1]: c_scaled = c / max(|c|)
-    std::vector<float> scaled_c(num_vars_);
+    std::vector<float> scaled_c(num_vars_, 0.0f);
+    float safe_max_c = (max_c_ > 1e-10f) ? max_c_ : 1.0f;
+    
     for (int i = 0; i < num_vars_; ++i) {
-        scaled_c[i] = static_cast<float>(mip_.c[i]) / max_c_;
+        float val = static_cast<float>(mip_.c[i]) / safe_max_c;
+        // Clamp to reasonable range
+        if (std::isnan(val) || std::isinf(val)) {
+            val = 0.0f;
+        }
+        val = std::max(-10.0f, std::min(10.0f, val));
+        scaled_c[i] = val;
     }
     return scaled_c;
 }
@@ -205,6 +258,72 @@ inline std::vector<float> FeatureBuilder::compute_var_centrality() const {
     return centrality;
 }
 
+// inline VariableFeatures FeatureBuilder::build_variable_features(
+//     const RLState& state,
+//     const std::vector<double>& scaled_A
+// ) {
+//     (void)scaled_A;
+//     VariableFeatures vf;
+//     vf.num_vars = num_vars_;
+//     vf.features.resize(num_vars_ * VAR_FEATURE_DIM, 0.0f);
+
+//     auto scaled_c = scale_objective_coeffs();
+//     auto var_degrees = compute_var_degrees();
+//     auto var_centrality = compute_var_centrality();
+
+//     for (int i = 0; i < num_vars_; ++i) {
+//         float* f = vf.get_features(i);
+//         int idx = 0;
+
+//         // Feature 0: Scaled objective coefficient c_i / max(|c|)
+//         f[idx++] = scaled_c[i];
+
+//         // Feature 1: Normalized lower bound
+//         f[idx++] = static_cast<float>(mip_.lb[i]) / (max_b_ + 1e-10f);
+
+//         // Feature 2: Normalized upper bound
+//         f[idx++] = static_cast<float>(mip_.ub[i]) / (max_b_ + 1e-10f);
+
+//         // Feature 3: Current value (normalized)
+//         f[idx++] = static_cast<float>(state.x[i]) / (max_b_ + 1e-10f);
+
+//         // Feature 4: Bound indicator (1 if at or beyond bound)
+//         f[idx++] = static_cast<float>(
+//             (state.x[i] <= mip_.lb[i] + 1e-6) ||
+//             (state.x[i] >= mip_.ub[i] - 1e-6)
+//         );
+
+//         // Feature 5-36: Periodic embedding of x_i (32 dimensions)
+//         auto pe = periodic_embed(state.x[i]);
+//         for (int j = 0; j < PERIODIC_EMBED_DIM; ++j) {
+//             f[idx++] = pe[j];
+//         }
+
+//         // Feature 37: Normalized degree
+//         f[idx++] = static_cast<float>(var_degrees[i]) / max_degree_;
+
+//         // Feature 38: Centrality
+//         f[idx++] = var_centrality[i];
+
+//         // Feature 39: Variable type indicator (1 if integer/binary)
+//         f[idx++] = (mip_.vartype[i] != VarType::CONTINUOUS) ? 1.0f : 0.0f;
+
+//         // Feature 40: Binary indicator (1 if binary)
+//         f[idx++] = (mip_.vartype[i] == VarType::BINARY) ? 1.0f : 0.0f;
+
+//         // Features 41-63: Reserved for future use (zero-padded)
+//         // Can be used for additional features like:
+//         // - Reduced cost (if available from LP solver)
+//         // - Pseudocost estimates
+//         // - Conflict graph information
+//         while (idx < VAR_FEATURE_DIM) {
+//             f[idx++] = 0.0f;
+//         }
+//     }
+
+//     return vf;
+// }
+
 inline VariableFeatures FeatureBuilder::build_variable_features(
     const RLState& state,
     const std::vector<double>& scaled_A
@@ -218,53 +337,104 @@ inline VariableFeatures FeatureBuilder::build_variable_features(
     auto var_degrees = compute_var_degrees();
     auto var_centrality = compute_var_centrality();
 
+    // Safety: Pre-compute global bounds for clamping
+    const float MAX_FEATURE_VAL = 10.0f;
+    const float MIN_FEATURE_VAL = -10.0f;
+    const float EPS = 1e-8f;
+
     for (int i = 0; i < num_vars_; ++i) {
         float* f = vf.get_features(i);
         int idx = 0;
 
+        // Helper lambda to safely set values
+        auto set_safe = [&](float val) {
+            if (std::isnan(val) || std::isinf(val)) {
+                f[idx++] = 0.0f;
+            } else {
+                f[idx++] = std::max(MIN_FEATURE_VAL, std::min(MAX_FEATURE_VAL, val));
+            }
+        };
+
         // Feature 0: Scaled objective coefficient c_i / max(|c|)
-        f[idx++] = scaled_c[i];
+        float c_val = scaled_c[i];
+        set_safe(c_val);
 
         // Feature 1: Normalized lower bound
-        f[idx++] = static_cast<float>(mip_.lb[i]) / (max_b_ + 1e-10f);
+        float lb_val = static_cast<float>(mip_.lb[i]) / (max_b_ + EPS);
+        set_safe(lb_val);
 
         // Feature 2: Normalized upper bound
-        f[idx++] = static_cast<float>(mip_.ub[i]) / (max_b_ + 1e-10f);
+        float ub_val = static_cast<float>(mip_.ub[i]);
+        // Handle infinite bounds (common in ILP)
+        if (std::isinf(ub_val) || ub_val > 1e30f) {
+            ub_val = 1e6f;  // Large but finite
+        }
+        ub_val = ub_val / (max_b_ + EPS);
+        set_safe(ub_val);
 
         // Feature 3: Current value (normalized)
-        f[idx++] = static_cast<float>(state.x[i]) / (max_b_ + 1e-10f);
+        float x_val = static_cast<float>(state.x[i]);
+        if (std::isinf(x_val) || std::isnan(x_val)) {
+            x_val = 0.0f;
+        }
+        x_val = x_val / (max_b_ + EPS);
+        set_safe(x_val);
 
         // Feature 4: Bound indicator (1 if at or beyond bound)
-        f[idx++] = static_cast<float>(
-            (state.x[i] <= mip_.lb[i] + 1e-6) ||
-            (state.x[i] >= mip_.ub[i] - 1e-6)
-        );
+        bool at_lower = (state.x[i] <= mip_.lb[i] + 1e-6);
+        bool at_upper = false;
+        if (mip_.ub[i] < 1e30f) {  // Only check if upper bound is finite
+            at_upper = (state.x[i] >= mip_.ub[i] - 1e-6);
+        }
+        float bound_flag = (at_lower || at_upper) ? 1.0f : 0.0f;
+        set_safe(bound_flag);
 
         // Feature 5-36: Periodic embedding of x_i (32 dimensions)
         auto pe = periodic_embed(state.x[i]);
         for (int j = 0; j < PERIODIC_EMBED_DIM; ++j) {
-            f[idx++] = pe[j];
+            float pe_val = pe[j];
+            if (std::isnan(pe_val) || std::isinf(pe_val)) {
+                pe_val = 0.0f;
+            }
+            pe_val = std::max(-1.0f, std::min(1.0f, pe_val));  // PE should be in [-1,1]
+            f[idx++] = pe_val;
         }
 
         // Feature 37: Normalized degree
-        f[idx++] = static_cast<float>(var_degrees[i]) / max_degree_;
+        float degree_val = static_cast<float>(var_degrees[i]) / (max_degree_ + EPS);
+        set_safe(degree_val);
 
         // Feature 38: Centrality
-        f[idx++] = var_centrality[i];
+        float cent_val = var_centrality[i];
+        if (std::isnan(cent_val) || std::isinf(cent_val)) {
+            cent_val = 0.0f;
+        }
+        cent_val = std::max(0.0f, std::min(1.0f, cent_val));
+        set_safe(cent_val);
 
         // Feature 39: Variable type indicator (1 if integer/binary)
-        f[idx++] = (mip_.vartype[i] != VarType::CONTINUOUS) ? 1.0f : 0.0f;
+        float type_val = (mip_.vartype[i] != VarType::CONTINUOUS) ? 1.0f : 0.0f;
+        set_safe(type_val);
 
         // Feature 40: Binary indicator (1 if binary)
-        f[idx++] = (mip_.vartype[i] == VarType::BINARY) ? 1.0f : 0.0f;
+        float binary_val = (mip_.vartype[i] == VarType::BINARY) ? 1.0f : 0.0f;
+        set_safe(binary_val);
 
-        // Features 41-63: Reserved for future use (zero-padded)
-        // Can be used for additional features like:
-        // - Reduced cost (if available from LP solver)
-        // - Pseudocost estimates
-        // - Conflict graph information
+        // Features 41-63: Reserved (zero-padded)
         while (idx < VAR_FEATURE_DIM) {
             f[idx++] = 0.0f;
+        }
+    }
+
+    // Optional: Global feature normalization for the entire tensor
+    float global_max = 0.0f;
+    for (size_t i = 0; i < vf.features.size(); ++i) {
+        global_max = std::max(global_max, std::abs(vf.features[i]));
+    }
+    if (global_max > 10.0f) {
+        float scale = 10.0f / global_max;
+        for (size_t i = 0; i < vf.features.size(); ++i) {
+            vf.features[i] *= scale;
         }
     }
 

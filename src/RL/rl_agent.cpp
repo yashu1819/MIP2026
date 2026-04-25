@@ -464,12 +464,12 @@ TrainingForwardResult RLAgent::select_actions_training(
     // Actor forward pass (with gradients, training mode, with edge weights)
     auto logits_t = actor_torch_->forward(var_features, constr_features, edge_index, changeable_mask, /*is_training=*/true, edge_weights);
 
+    // Nan Handling
+    logits_t = torch::nan_to_num(logits_t, 0.0, 0.0, 0.0);
+    logits_t = torch::clamp(logits_t, -10.0f, 10.0f); // Also clamp to reasonable range
+
     // Sample actions and compute log probs
     auto probs_t = torch::softmax(logits_t, /*dim=*/1);  // (nc, 3)
-    
-    // // discourage action = 0 (index 1)
-    // probs_t.select(1, 1) *= 0.1;
-    // probs_t = probs_t / probs_t.sum(1, true);
 
     // std::cout << "probs: " << probs_t << std::endl;
     std::cout << "min: " << probs_t.min().item<float>() << " max: " << probs_t.max().item<float>() << " sum: " << probs_t.sum().item<float>() << std::endl;
