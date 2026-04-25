@@ -165,7 +165,42 @@ inline std::vector<double> apply_actions(
     return x_new;
 }
 
-// MILP-aware version: skips continuous, clamps binary/integer
+// // MILP-aware version: skips continuous, clamps binary/integer
+// inline std::vector<double> apply_actions_milp(
+//     const MIPProblem& mip,
+//     const std::vector<double>& x,
+//     const std::vector<Action>& actions,
+//     const std::vector<int>& changeable_indices
+// ) {
+//     std::vector<double> x_new = x;
+//     for (size_t i = 0; i < changeable_indices.size(); ++i) {
+//         int var_idx = changeable_indices[i];
+
+//         // Skip continuous variables — they should not be modified by ±1
+//         if (mip.vartype[var_idx] == VarType::CONTINUOUS) {
+//             continue;
+//         }
+
+//         // Apply action
+//         x_new[var_idx] += static_cast<int>(actions[i]);
+
+//         // Clamp to bounds
+//         if (mip.vartype[var_idx] == VarType::BINARY) {
+//             // Binary: clamp to {0, 1}
+//             if (x_new[var_idx] < 0.5) x_new[var_idx] = 0.0;
+//             else x_new[var_idx] = 1.0;
+//         } else {
+//             // Integer: clamp to [lb, ub] and round
+//             x_new[var_idx] = std::round(x_new[var_idx]);
+//             if (x_new[var_idx] < mip.lb[var_idx]) x_new[var_idx] = mip.lb[var_idx];
+//             if (x_new[var_idx] > mip.ub[var_idx]) x_new[var_idx] = mip.ub[var_idx];
+//         }
+//     }
+//     return x_new;
+// }
+
+
+
 inline std::vector<double> apply_actions_milp(
     const MIPProblem& mip,
     const std::vector<double>& x,
@@ -173,29 +208,68 @@ inline std::vector<double> apply_actions_milp(
     const std::vector<int>& changeable_indices
 ) {
     std::vector<double> x_new = x;
+
     for (size_t i = 0; i < changeable_indices.size(); ++i) {
         int var_idx = changeable_indices[i];
 
-        // Skip continuous variables — they should not be modified by ±1
+        // Skip continuous variables
         if (mip.vartype[var_idx] == VarType::CONTINUOUS) {
             continue;
         }
 
-        // Apply action
-        x_new[var_idx] += static_cast<int>(actions[i]);
+        int action = static_cast<int>(actions[i]);  // {-1, 0, +1}
 
-        // Clamp to bounds
+        // FIX 1: Binary variables → DIRECT ASSIGNMENT
         if (mip.vartype[var_idx] == VarType::BINARY) {
-            // Binary: clamp to {0, 1}
-            if (x_new[var_idx] < 0.5) x_new[var_idx] = 0.0;
-            else x_new[var_idx] = 1.0;
-        } else {
-            // Integer: clamp to [lb, ub] and round
-            x_new[var_idx] = std::round(x_new[var_idx]);
-            if (x_new[var_idx] < mip.lb[var_idx]) x_new[var_idx] = mip.lb[var_idx];
-            if (x_new[var_idx] > mip.ub[var_idx]) x_new[var_idx] = mip.ub[var_idx];
+            if (action == 1) {
+                x_new[var_idx] = 1.0;
+            } else if (action == -1) {
+                x_new[var_idx] = 0.0;
+            }
+            // action == 0 → keep unchanged
+        }
+
+        // FIX 2: Integer variables → controlled step
+        else {
+            double new_val = x_new[var_idx] + action;
+
+            // Round to integer
+            new_val = std::round(new_val);
+
+            // Clamp to bounds
+            if (new_val < mip.lb[var_idx]) new_val = mip.lb[var_idx];
+            if (new_val > mip.ub[var_idx]) new_val = mip.ub[var_idx];
+
+            x_new[var_idx] = new_val;
         }
     }
+
+    // FIX 3: Ensure at least one change (critical for escaping stagnation)
+    bool changed = false;
+    for (size_t i = 0; i < x.size(); ++i) {
+        if (std::abs(x[i] - x_new[i]) > 1e-8) {
+            changed = true;
+            break;
+        }
+    }
+
+    if (!changed && !changeable_indices.empty()) {
+        int idx = changeable_indices[rand() % changeable_indices.size()];
+
+        if (mip.vartype[idx] == VarType::BINARY) {
+            x_new[idx] = 1.0 - x_new[idx];  // flip
+        } else {
+            // small random perturbation for integer
+            int delta = (rand() % 2 == 0) ? -1 : 1;
+            double new_val = std::round(x_new[idx] + delta);
+
+            if (new_val < mip.lb[idx]) new_val = mip.lb[idx];
+            if (new_val > mip.ub[idx]) new_val = mip.ub[idx];
+
+            x_new[idx] = new_val;
+        }
+    }
+
     return x_new;
 }
 

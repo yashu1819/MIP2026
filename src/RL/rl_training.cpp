@@ -93,6 +93,21 @@ EpisodeStats RLTrainer::training_episode(const MIPProblem& mip, std::mt19937& rn
 
         // Apply actions (MILP-aware)
         std::vector<double> x_new = apply_actions_milp(mip, state.x, fwd.actions, changeable);
+    
+        double diff = 0;
+        for (size_t i = 0; i < state.x.size(); i++) {
+            diff += std::abs(state.x[i] - x_new[i]);
+        }
+
+        if (diff < 1e-6 && !changeable.empty()) {
+            std::cout << "No state change → forcing flip\n";
+            int idx = changeable[rand() % changeable.size()];
+
+            // flip binary variable
+            if (mip.vartype[idx] == VarType::BINARY) {
+                x_new[idx] = 1.0 - x_new[idx];
+            }
+        }
 
         // Solve LP sub-problem for continuous variables
         solve_lp_subproblem(mip, x_new);

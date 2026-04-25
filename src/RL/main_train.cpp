@@ -80,8 +80,8 @@ int main(int argc, char* argv[]) {
 
     // Parse arguments
     rl_sph::TrainingConfig config;
-    config.num_updates = 5000;
-    config.max_steps = 2000;
+    config.num_updates = 50; // 5000
+    config.max_steps = 10; // 2000
     config.phase1_steps = 500;
     config.batch_size = 8;
     config.learning_rate = 1e-4f;

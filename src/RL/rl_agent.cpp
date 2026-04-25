@@ -444,7 +444,23 @@ TrainingForwardResult RLAgent::select_actions_training(
 
     // Sample actions and compute log probs
     auto probs_t = torch::softmax(logits_t, /*dim=*/1);  // (nc, 3)
-    auto dist = torch::multinomial(probs_t, 1);  // (nc, 1)
+    
+    // discourage action = 0 (index 1)
+    probs_t.select(1, 1) *= 0.1;
+    probs_t = probs_t / probs_t.sum(1, true);
+
+    // std::cout << "probs: " << probs_t << std::endl;
+    std::cout << "min: " << probs_t.min().item<float>() << " max: " << probs_t.max().item<float>() << " sum: " << probs_t.sum().item<float>() << std::endl;
+    // auto dist = torch::multinomial(probs_t, 1);  // (nc, 1)
+
+    float eps = 0.3;  // start HIGH
+    auto rand_mask = torch::rand({probs_t.size(0), 1}, probs_t.options());
+    auto random_actions = torch::randint(0, 3, {probs_t.size(0), 1}, torch::kLong);
+    auto sampled = torch::multinomial(probs_t, 1);
+    // override some actions with random
+    auto use_random = (rand_mask < eps);
+    auto dist = torch::where(use_random, random_actions, sampled);
+
     auto log_probs = torch::log_softmax(logits_t, 1);
 
     result.log_prob_sum = 0.0f;

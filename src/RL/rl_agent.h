@@ -207,7 +207,7 @@ struct BipartiteGraphAttentionLayerImpl : torch::nn::Module {
             edge_scores = edge_scores + edge_weights.view({-1, 1});
         }
 
-        // Apply softmax per target node (over its neighboring sources)
+        // // Apply softmax per target node (over its neighboring sources)
         // auto attention_weights = torch::zeros_like(edge_scores);  // (num_edges, 1)
 
         // for (int t = 0; t < num_targets; ++t) {
@@ -223,24 +223,20 @@ struct BipartiteGraphAttentionLayerImpl : torch::nn::Module {
 
         // Compute exp scores
         auto exp_scores = torch::exp(edge_scores);  // (num_edges, 1)
-
         // Sum per target node
         auto denom = torch::zeros(
             {num_targets, 1},
             torch::TensorOptions().dtype(edge_scores.dtype()).device(edge_scores.device())
         );
-
         // Ensure index is long and correct shape
         auto idx = target_idx.to(torch::kLong).reshape({-1, 1});
-
         // Aggregate exp_scores per target
         denom.scatter_add_(0, idx, exp_scores);
-
         // Gather denominator per edge
         auto denom_per_edge = denom.index_select(0, target_idx.to(torch::kLong));
-
         // Final attention weights
         auto attention_weights = exp_scores / (denom_per_edge + 1e-8);
+
 
         // Weighted sum of values
         auto weighted_values = value_per_edge * attention_weights;  // (num_edges, hidden_dim)
