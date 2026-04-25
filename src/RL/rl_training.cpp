@@ -23,7 +23,10 @@ std::vector<double> RLTrainer::initialize_solution(
     const MIPProblem& mip, std::mt19937& rng, int& prev_num_ones)
 {
     std::vector<double> x(mip.num_cols, 0.0);
+
+    // For first instance, use 1% of variables as ones; for subsequent, use half of previous
     int num_ones = (prev_num_ones == 0) ? std::max(1, mip.num_cols / 100) : prev_num_ones / 2;
+
     std::vector<int> indices(mip.num_cols);
     for (int i = 0; i < mip.num_cols; ++i) indices[i] = i;
     std::shuffle(indices.begin(), indices.end(), rng);
@@ -86,6 +89,12 @@ EpisodeStats RLTrainer::training_episode(const MIPProblem& mip, std::mt19937& rn
 
         // Select variables (Algorithm 3)
         std::vector<int> changeable = var_selector.select_variables(state, phase);
+
+        // Skip if no changeable variables
+        if (changeable.empty()) {
+            step++;
+            continue;
+        } 
 
         // Get actions from agent (training mode with log_probs)
         TrainingForwardResult fwd = agent_ptr_->select_actions_training(
@@ -203,7 +212,12 @@ double RLTrainer::training_step(const MIPProblem& mip, std::mt19937& rng) {
 TrainingStats RLTrainer::train_on_instance(const MIPProblem& mip, int instance_idx) {
     TrainingStats stats;
     double start_time = get_time_seconds();
+
+    // CRITICAL: Update agent's MIP reference for THIS instance
+    agent_ptr_->set_mip_problem(mip);
+
     EpisodeStats es = training_episode(mip, rng_);
+
     stats.avg_reward = es.total_reward;
     stats.avg_time_per_update = get_time_seconds() - start_time;
     stats.total_updates = 1;
@@ -257,19 +271,23 @@ TrainingStats RLTrainer::train() {
         print_thin_separator();
     }
 
-    // Initialize agent
-    int nv = instances[0].num_cols, nc = instances[0].num_rows;
+    // ========== FIXED: Create agent WITHOUT dimensions ==========
     if (agent_ptr_ == nullptr) {
         AgentConfig ac;
         ac.learning_rate = config_.learning_rate;
         ac.rmsprop_alpha = config_.rmsprop_alpha;
         ac.rmsprop_epsilon = config_.rmsprop_epsilon;
         ac.weight_decay = config_.weight_decay;
-        agent_ptr_ = new RLAgent(nv, nc, ac);
-
+        ac.hidden_dim = 128;
+        ac.num_heads = 4;
+        ac.num_layers = 4;
+        ac.dropout = 0.1f;
+        
+        // CRITICAL FIX: Create agent without dimensions!
+        agent_ptr_ = new RLAgent(ac);  // No nv, nc parameters!
+        
         if (config_.verbose) {
-            std::cout << "  Agent initialized (vars=" << nv
-                      << ", constrs=" << nc << ")" << std::endl;
+            std::cout << "  Agent initialized " << std::endl;
         }
     }
 
@@ -297,8 +315,10 @@ TrainingStats RLTrainer::train() {
 
         for (int b = 0; b < config_.batch_size; ++b) {
             size_t idx = dist(rng_);
+
             // Set MIP reference for the current instance
             agent_ptr_->set_mip_problem(instances[idx]);
+            
             TrainingStats ist = train_on_instance(instances[idx], static_cast<int>(idx));
             batch_reward += ist.avg_reward;
 

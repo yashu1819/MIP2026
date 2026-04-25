@@ -210,14 +210,12 @@ float CriticNetworkCPU::forward(int phase, double obj,
 }
 
 // ==================== RL Agent ====================
-RLAgent::RLAgent(int num_vars, int num_constraints, const AgentConfig& config)
+RLAgent::RLAgent(const AgentConfig& config)
     : mip_ptr_(nullptr)
     , embedding_(new PeriodicEmbedding(16))
     , config_(config)
-    , num_vars_(num_vars)
-    , num_constraints_(num_constraints)
-    , actor_cpu_(new ActorNetworkCPU(num_vars, num_constraints, config))
-    , critic_cpu_(new CriticNetworkCPU(num_vars, num_constraints, config))
+    , actor_cpu_(new ActorNetworkCPU(0, 0, config))
+    , critic_cpu_(new CriticNetworkCPU(0, 0, config))
 #ifdef USE_LIBTORCH
     , actor_torch_(VAR_FEATURE_DIM, CONST_FEATURE_DIM, config.hidden_dim, config.num_heads, config.num_layers)
     , critic_torch_(VAR_FEATURE_DIM, CONST_FEATURE_DIM, config.hidden_dim)
@@ -246,26 +244,67 @@ RLAgent::~RLAgent() {
 
 #ifdef USE_LIBTORCH
 // Build variable feature tensor for GNN actor
-torch::Tensor RLAgent::build_var_feature_tensor(
-    const RLState& state,
-    const BipartiteGraph& graph
-) {
-    if (mip_ptr_ == nullptr)
-        return torch::zeros({num_vars_, VAR_FEATURE_DIM}, torch::kFloat32);
+// torch::Tensor RLAgent::build_var_feature_tensor(
+//     const RLState& state,
+//     const BipartiteGraph& graph
+// ) {
+//     if (mip_ptr_ == nullptr)
+//         return torch::zeros({0, VAR_FEATURE_DIM}, torch::kFloat32);
 
+//     int current_num_vars = state.n;
+
+//     FeatureBuilder fb(*mip_ptr_, graph);
+//     std::vector<double> scaled_A(graph.scaled_A_row);
+//     VariableFeatures vf = fb.build_variable_features(state, scaled_A);
+
+//     auto tensor = torch::zeros({current_num_vars, VAR_FEATURE_DIM}, torch::kFloat32);
+//     auto acc = tensor.accessor<float, 2>();
+
+//     for (int i = 0; i < current_num_vars; ++i) {
+//         const float* feats = vf.get_features(i);
+//         for (int j = 0; j < VAR_FEATURE_DIM; ++j) {
+//             acc[i][j] = feats[j];
+//         }
+//     }
+//     return tensor;
+// }
+
+torch::Tensor RLAgent::build_var_feature_tensor(const RLState& state, const BipartiteGraph& graph) {
+    if (mip_ptr_ == nullptr)
+        return torch::zeros({0, VAR_FEATURE_DIM}, torch::kFloat32);
+    
     FeatureBuilder fb(*mip_ptr_, graph);
     std::vector<double> scaled_A(graph.scaled_A_row);
     VariableFeatures vf = fb.build_variable_features(state, scaled_A);
-
-    auto tensor = torch::zeros({num_vars_, VAR_FEATURE_DIM}, torch::kFloat32);
+    
+    int current_num_vars = state.n;
+    auto tensor = torch::zeros({current_num_vars, VAR_FEATURE_DIM}, torch::kFloat32);
     auto acc = tensor.accessor<float, 2>();
-
-    for (int i = 0; i < num_vars_; ++i) {
+    
+    // Track min/max for debugging
+    float min_val = 1e10f, max_val = -1e10f;
+    
+    for (int i = 0; i < current_num_vars; ++i) {
         const float* feats = vf.get_features(i);
         for (int j = 0; j < VAR_FEATURE_DIM; ++j) {
-            acc[i][j] = feats[j];
+            float val = feats[j];
+            // Clamp to reasonable range
+            if (std::isnan(val) || std::isinf(val)) {
+                val = 0.0f;
+            }
+            val = std::max(-10.0f, std::min(10.0f, val));  // Clamp to [-10, 10]
+            acc[i][j] = val;
+            min_val = std::min(min_val, val);
+            max_val = std::max(max_val, val);
         }
     }
+    
+    // Debug output
+    static int call_count = 0;
+    if (call_count++ % 100 == 0) {
+        std::cout << "Var features - min: " << min_val << ", max: " << max_val << std::endl;
+    }
+    
     return tensor;
 }
 
@@ -275,16 +314,18 @@ torch::Tensor RLAgent::build_constr_feature_tensor(
     const BipartiteGraph& graph
 ) {
     if (mip_ptr_ == nullptr)
-        return torch::zeros({num_constraints_, CONST_FEATURE_DIM}, torch::kFloat32);
+        return torch::zeros({0, CONST_FEATURE_DIM}, torch::kFloat32);
+
+    int current_num_constr = state.m;
 
     FeatureBuilder fb(*mip_ptr_, graph);
     std::vector<double> scaled_A(graph.scaled_A_row);
     ConstraintFeatures cf = fb.build_constraint_features(state, scaled_A);
 
-    auto tensor = torch::zeros({num_constraints_, CONST_FEATURE_DIM}, torch::kFloat32);
+    auto tensor = torch::zeros({current_num_constr, CONST_FEATURE_DIM}, torch::kFloat32);
     auto acc = tensor.accessor<float, 2>();
 
-    for (int j = 0; j < num_constraints_; ++j) {
+    for (int j = 0; j < current_num_constr; ++j) {
         const float* feats = cf.get_features(j);
         for (int k = 0; k < CONST_FEATURE_DIM; ++k) {
             acc[j][k] = feats[k];
@@ -295,9 +336,7 @@ torch::Tensor RLAgent::build_constr_feature_tensor(
 
 // Build edge index tensor for graph message passing
 // Returns (2, num_edges) tensor where row 0 = source indices, row 1 = target indices
-torch::Tensor RLAgent::build_edge_index_tensor(
-    const BipartiteGraph& graph
-) {
+torch::Tensor RLAgent::build_edge_index_tensor(const BipartiteGraph& graph) {
     int num_edges = static_cast<int>(graph.edges.size());
     auto edge_index = torch::zeros({2, num_edges}, torch::kLong);
     auto acc = edge_index.accessor<long, 2>();
@@ -367,12 +406,15 @@ std::vector<Action> RLAgent::select_actions(
 #ifdef USE_LIBTORCH
     torch::NoGradGuard no_grad;
 
+    // Get dimensions from current state
+    int current_num_vars = state.n;
+
     // Build feature tensors
     auto var_features = build_var_feature_tensor(state, graph);
     auto constr_features = build_constr_feature_tensor(state, graph);
     auto edge_index = build_edge_index_tensor(graph);
     auto edge_weights = build_edge_weight_tensor(graph);
-    auto changeable_mask = build_changeable_mask(num_vars_, changeable_indices);
+    auto changeable_mask = build_changeable_mask(current_num_vars, changeable_indices);
 
     // Actor forward pass with GNN (inference mode, with edge weights)
     auto logits_t = actor_torch_->forward(var_features, constr_features, edge_index, changeable_mask, /*is_training=*/false, edge_weights);
@@ -389,30 +431,6 @@ std::vector<Action> RLAgent::select_actions(
         actions.push_back(static_cast<Action>(idx - 1));
     }
     return actions;
-#else
-    if (mip_ptr_ == nullptr) {
-        std::vector<Action> actions;
-        std::uniform_int_distribution<int> dist(0, 2);
-        for (size_t i = 0; i < changeable_indices.size(); ++i)
-            actions.push_back(static_cast<Action>(dist(rng) - 1));
-        return actions;
-    }
-    FeatureBuilder fb(*mip_ptr_, graph);
-    std::vector<double> scaled_A(graph.scaled_A_row);
-    VariableFeatures vf = fb.build_variable_features(state, scaled_A);
-
-    std::vector<double> features;
-    features.reserve(changeable_indices.size() * VAR_FEATURE_DIM);
-    for (int idx : changeable_indices) {
-        if (idx >= 0 && idx < vf.num_vars) {
-            const float* f = vf.get_features(idx);
-            for (int j = 0; j < VAR_FEATURE_DIM; ++j) features.push_back(f[j]);
-        } else {
-            for (int j = 0; j < VAR_FEATURE_DIM; ++j) features.push_back(0.0);
-        }
-    }
-    auto logits = actor_cpu_->forward(features, changeable_indices);
-    return actor_cpu_->sample_actions(logits, rng);
 #endif
 }
 
@@ -432,12 +450,16 @@ TrainingForwardResult RLAgent::select_actions_training(
     }
 
 #ifdef USE_LIBTORCH
+
+    // Get dimensions from current state
+    int current_num_vars = state.n;
+
     // Build feature tensors
     auto var_features = build_var_feature_tensor(state, graph);
     auto constr_features = build_constr_feature_tensor(state, graph);
     auto edge_index = build_edge_index_tensor(graph);
     auto edge_weights = build_edge_weight_tensor(graph);
-    auto changeable_mask = build_changeable_mask(num_vars_, changeable_indices);
+    auto changeable_mask = build_changeable_mask(current_num_vars, changeable_indices);
 
     // Actor forward pass (with gradients, training mode, with edge weights)
     auto logits_t = actor_torch_->forward(var_features, constr_features, edge_index, changeable_mask, /*is_training=*/true, edge_weights);
@@ -445,9 +467,9 @@ TrainingForwardResult RLAgent::select_actions_training(
     // Sample actions and compute log probs
     auto probs_t = torch::softmax(logits_t, /*dim=*/1);  // (nc, 3)
     
-    // discourage action = 0 (index 1)
-    probs_t.select(1, 1) *= 0.1;
-    probs_t = probs_t / probs_t.sum(1, true);
+    // // discourage action = 0 (index 1)
+    // probs_t.select(1, 1) *= 0.1;
+    // probs_t = probs_t / probs_t.sum(1, true);
 
     // std::cout << "probs: " << probs_t << std::endl;
     std::cout << "min: " << probs_t.min().item<float>() << " max: " << probs_t.max().item<float>() << " sum: " << probs_t.sum().item<float>() << std::endl;
@@ -496,32 +518,7 @@ TrainingForwardResult RLAgent::select_actions_training(
         obj_tensor
     );
     result.state_value = value_t.item<float>();
-#else
-    // CPU fallback
-    if (mip_ptr_ != nullptr) {
-        FeatureBuilder fb(*mip_ptr_, graph);
-        std::vector<double> scaled_A(graph.scaled_A_row);
-        VariableFeatures vf = fb.build_variable_features(state, scaled_A);
-        std::vector<double> feats;
-        feats.reserve(nc * VAR_FEATURE_DIM);
-        for (int idx : changeable_indices) {
-            if (idx >= 0 && idx < vf.num_vars) {
-                const float* f = vf.get_features(idx);
-                for (int j = 0; j < VAR_FEATURE_DIM; ++j) feats.push_back(f[j]);
-            } else {
-                for (int j = 0; j < VAR_FEATURE_DIM; ++j) feats.push_back(0.0);
-            }
-        }
-        result.logits = actor_cpu_->forward(feats, changeable_indices);
-        result.actions = actor_cpu_->sample_actions(result.logits, rng);
-        result.log_prob_sum = actor_cpu_->log_probability(result.logits, result.actions);
-    } else {
-        std::uniform_int_distribution<int> d(0, 2);
-        for (int i = 0; i < nc; ++i)
-            result.actions.push_back(static_cast<Action>(d(rng) - 1));
-        result.log_prob_sum = 0.0f;
-    }
-    result.state_value = estimate_value(state, phase);
+
 #endif
     return result;
 }
@@ -529,12 +526,6 @@ TrainingForwardResult RLAgent::select_actions_training(
 float RLAgent::estimate_value(const RLState& state, int phase) {
 #ifdef USE_LIBTORCH
     torch::NoGradGuard no_grad;
-
-    if (mip_ptr_ == nullptr) {
-        // Fallback for CPU
-        std::vector<double> dummy_b(state.f.size(), 0.0);
-        return critic_cpu_->forward(phase, state.obj, state.f, dummy_b);
-    }
 
     // Build graph and feature tensors
     BipartiteGraph graph = build_graph(*mip_ptr_);
@@ -560,10 +551,8 @@ float RLAgent::estimate_value(const RLState& state, int phase) {
         obj_tensor
     );
     return value_t.item<float>();
-#else
-    std::vector<double> dummy_b(state.f.size(), 0.0);
-    return critic_cpu_->forward(phase, state.obj, state.f, dummy_b);
 #endif
+    return 0.0f;
 }
 
 void RLAgent::update(
@@ -581,10 +570,14 @@ void RLAgent::update(
 #ifdef USE_LIBTORCH
     // Compute values for all states
     std::vector<float> values(T + 1, 0.0f);
-    for (size_t i = 0; i < T; ++i)
-        values[i] = estimate_value(states[i], phases[i]);
-    if (T < states.size())
-        values[T] = estimate_value(states[T], phases[T - 1]);
+    for (size_t i = 0; i < T; ++i) values[i] = estimate_value(states[i], phases[i]);
+    
+    // if (T < states.size())
+    //     values[T] = estimate_value(states[T], phases[T - 1]);
+    if (T < states.size()) {
+        int last_phase = (phases.empty() || phases.size() <= T) ? phases[T-1] : phases[T];
+        values[T] = estimate_value(states[T], last_phase);
+    }
 
     // Compute TD errors (advantages)
     std::vector<float> deltas(T);
@@ -603,10 +596,13 @@ void RLAgent::update(
     torch::Tensor total_loss = torch::zeros({}, torch::kFloat32);
 
     for (size_t i = 0; i < T; ++i) {
+        // Get dimensions from CURRENT state
+        int current_num_vars = states[i].n;     
+
         // Build feature tensors
         auto var_features = build_var_feature_tensor(states[i], graph);
         auto constr_features = build_constr_feature_tensor(states[i], graph);
-        auto changeable_mask = build_changeable_mask(num_vars_, changeable_indices_list[i]);
+        auto changeable_mask = build_changeable_mask(current_num_vars, changeable_indices_list[i]);
 
         // Actor forward pass (training mode, with edge weights)
         auto logits_t = actor_torch_->forward(var_features, constr_features, edge_index, changeable_mask, /*is_training=*/true, edge_weights);
@@ -649,26 +645,6 @@ void RLAgent::update(
     optimizer_->zero_grad();
     total_loss.backward();
     optimizer_->step();
-#else
-    // CPU fallback: simplified weight perturbation
-    std::vector<float> advantages(T);
-    for (size_t i = 0; i < T; ++i) {
-        float baseline = estimate_value(states[i], phases.empty() ? 1 : phases[i]);
-        advantages[i] = static_cast<float>(rewards[i]) - baseline;
-    }
-    float avg_adv = 0.0f;
-    for (float a : advantages) avg_adv += a;
-    if (!advantages.empty()) avg_adv /= static_cast<float>(advantages.size());
-
-    std::mt19937 gen(config_.seed + static_cast<unsigned>(T));
-    std::normal_distribution<float> noise(0.0f, config_.learning_rate * 0.01f);
-    if (avg_adv > 0) {
-        for (size_t i = 0; i < actor_cpu_->weights1_.size(); ++i)
-            actor_cpu_->weights1_[i] += noise(gen);
-    } else if (avg_adv < 0) {
-        for (size_t i = 0; i < actor_cpu_->weights1_.size(); ++i)
-            actor_cpu_->weights1_[i] -= noise(gen);
-    }
 #endif
 }
 
@@ -676,23 +652,6 @@ void RLAgent::save(const std::string& path) {
 #ifdef USE_LIBTORCH
     torch::save(actor_torch_, path + ".actor");
     torch::save(critic_torch_, path + ".critic");
-#else
-    FILE* f = fopen(path.c_str(), "wb");
-    if (!f) return;
-    fwrite(&config_.input_dim, sizeof(int), 1, f);
-    fwrite(&config_.hidden_dim, sizeof(int), 1, f);
-    auto wv = [](FILE* fp, const std::vector<float>& v) {
-        int sz = static_cast<int>(v.size());
-        fwrite(&sz, sizeof(int), 1, fp);
-        if (!v.empty()) fwrite(v.data(), sizeof(float), v.size(), fp);
-    };
-    wv(f, actor_cpu_->weights1_); wv(f, actor_cpu_->biases1_);
-    wv(f, actor_cpu_->weights2_); wv(f, actor_cpu_->biases2_);
-    wv(f, actor_cpu_->weights3_); wv(f, actor_cpu_->biases3_);
-    wv(f, critic_cpu_->weights1_); wv(f, critic_cpu_->biases1_);
-    wv(f, critic_cpu_->weights2_); wv(f, critic_cpu_->biases2_);
-    wv(f, critic_cpu_->weights3_); wv(f, critic_cpu_->biases3_);
-    fclose(f);
 #endif
 }
 
@@ -700,24 +659,6 @@ void RLAgent::load(const std::string& path) {
 #ifdef USE_LIBTORCH
     torch::load(actor_torch_, path + ".actor");
     torch::load(critic_torch_, path + ".critic");
-#else
-    FILE* f = fopen(path.c_str(), "rb");
-    if (!f) return;
-    int id, hd;
-    if (fread(&id, sizeof(int), 1, f) != 1) { fclose(f); return; }
-    if (fread(&hd, sizeof(int), 1, f) != 1) { fclose(f); return; }
-    auto rv = [](FILE* fp, std::vector<float>& v) {
-        int sz;
-        if (fread(&sz, sizeof(int), 1, fp) != 1) return;
-        if (sz > 0) { v.resize(sz); fread(v.data(), sizeof(float), sz, fp); }
-    };
-    rv(f, actor_cpu_->weights1_); rv(f, actor_cpu_->biases1_);
-    rv(f, actor_cpu_->weights2_); rv(f, actor_cpu_->biases2_);
-    rv(f, actor_cpu_->weights3_); rv(f, actor_cpu_->biases3_);
-    rv(f, critic_cpu_->weights1_); rv(f, critic_cpu_->biases1_);
-    rv(f, critic_cpu_->weights2_); rv(f, critic_cpu_->biases2_);
-    rv(f, critic_cpu_->weights3_); rv(f, critic_cpu_->biases3_);
-    fclose(f);
 #endif
 }
 

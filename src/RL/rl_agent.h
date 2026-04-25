@@ -399,11 +399,9 @@ struct CriticNetworkTorchImpl : torch::nn::Module {
     torch::nn::Linear value_fc2{nullptr};
 
     int hidden_dim;
-    int num_vars_;
-    int num_constraints_;
 
     CriticNetworkTorchImpl(int var_input_dim, int constr_input_dim, int hidden_dim_)
-        : hidden_dim(hidden_dim_), num_vars_(0), num_constraints_(0)
+        : hidden_dim(hidden_dim_)
     {
         // Initial embeddings
         var_embedding = register_module("var_embedding", torch::nn::Linear(var_input_dim, hidden_dim));
@@ -617,7 +615,7 @@ private:
 
 class RLAgent {
 public:
-    RLAgent(int num_vars, int num_constraints, const AgentConfig& config = AgentConfig());
+    RLAgent(const AgentConfig& config = AgentConfig());
     ~RLAgent();
 
     // Set MIP problem reference (required before using select_actions)
@@ -669,8 +667,6 @@ private:
     const MIPProblem* mip_ptr_;
     PeriodicEmbedding* embedding_;
     AgentConfig config_;
-    int num_vars_;
-    int num_constraints_;
 
     // CPU fallback networks (always available)
     ActorNetworkCPU* actor_cpu_;
