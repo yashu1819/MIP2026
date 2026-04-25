@@ -138,6 +138,7 @@ struct BipartiteGraphAttentionLayerImpl : torch::nn::Module {
         int num_vars = var_features.size(0);
         int num_constraints = constr_features.size(0);
         int num_edges = edge_index.size(1);
+        (void)num_edges;
 
         // Transform features to hidden dimension
         auto var_h = torch::relu(var_linear->forward(var_features));    // (num_vars, hidden_dim)
@@ -207,24 +208,45 @@ struct BipartiteGraphAttentionLayerImpl : torch::nn::Module {
         }
 
         // Apply softmax per target node (over its neighboring sources)
-        auto attention_weights = torch::zeros_like(edge_scores);  // (num_edges, 1)
+        // auto attention_weights = torch::zeros_like(edge_scores);  // (num_edges, 1)
 
-        for (int t = 0; t < num_targets; ++t) {
-            auto target_mask = (target_idx == t);  // (num_edges,) boolean mask
-            auto target_edge_indices = torch::nonzero(target_mask).squeeze(-1);
+        // for (int t = 0; t < num_targets; ++t) {
+        //     auto target_mask = (target_idx == t);  // (num_edges,) boolean mask
+        //     auto target_edge_indices = torch::nonzero(target_mask).squeeze(-1);
 
-            if (target_edge_indices.numel() > 0) {
-                auto target_edge_scores = edge_scores.index_select(0, target_edge_indices);
-                auto target_edge_weights = torch::softmax(target_edge_scores, 0);
-                attention_weights = attention_weights.scatter(0, target_edge_indices, target_edge_weights);
-            }
-        }
+        //     if (target_edge_indices.numel() > 0) {
+        //         auto target_edge_scores = edge_scores.index_select(0, target_edge_indices);
+        //         auto target_edge_weights = torch::softmax(target_edge_scores, 0);
+        //         attention_weights = attention_weights.scatter(0, target_edge_indices, target_edge_weights);
+        //     }
+        // }
+
+        // Compute exp scores
+        auto exp_scores = torch::exp(edge_scores);  // (num_edges, 1)
+
+        // Sum per target node
+        auto denom = torch::zeros(
+            {num_targets, 1},
+            torch::TensorOptions().dtype(edge_scores.dtype()).device(edge_scores.device())
+        );
+
+        // Ensure index is long and correct shape
+        auto idx = target_idx.to(torch::kLong).reshape({-1, 1});
+
+        // Aggregate exp_scores per target
+        denom.scatter_add_(0, idx, exp_scores);
+
+        // Gather denominator per edge
+        auto denom_per_edge = denom.index_select(0, target_idx.to(torch::kLong));
+
+        // Final attention weights
+        auto attention_weights = exp_scores / (denom_per_edge + 1e-8);
 
         // Weighted sum of values
         auto weighted_values = value_per_edge * attention_weights;  // (num_edges, hidden_dim)
 
         // Aggregate messages by summing for each target
-        auto output = torch::zeros({num_targets, hidden_dim}, target_h.dtype(), target_h.device());
+        auto output = torch::zeros({num_targets, hidden_dim},torch::TensorOptions().dtype(target_h.dtype()).device(target_h.device()));
         output.scatter_add_(0,
             target_idx.view({-1, 1}).expand({-1, hidden_dim}),
             weighted_values
@@ -350,7 +372,7 @@ struct ActorNetworkTorchImpl : torch::nn::Module {
         // Extract logits for changeable variables only
         auto changeable_indices = torch::nonzero(changeable_mask).squeeze(-1);  // (num_changeable,)
         if (changeable_indices.numel() == 0) {
-            return torch::zeros({0, 3}, var_features.dtype(), var_features.device());
+            return torch::zeros({0, 3},torch::TensorOptions().dtype(var_features.dtype()).device(var_features.device()));
         }
         auto logits = all_logits.index_select(0, changeable_indices);  // (num_changeable, 3)
 
@@ -443,7 +465,7 @@ struct CriticNetworkTorchImpl : torch::nn::Module {
         torch::nn::Linear& transform
     ) {
         if (num_targets == 0 || source_indices.numel() == 0) {
-            return torch::zeros({num_targets, hidden_dim}, source_features.dtype(), source_features.device());
+            return torch::zeros({num_targets, hidden_dim},torch::TensorOptions().dtype(source_features.dtype()).device(source_features.device()));
         }
 
         // Transform source features
@@ -453,7 +475,7 @@ struct CriticNetworkTorchImpl : torch::nn::Module {
         auto source_h = h.index_select(0, source_indices);  // (num_edges, hidden_dim)
 
         // Aggregate by summing messages for each target node
-        auto output = torch::zeros({num_targets, h.size(1)}, source_features.dtype(), source_features.device());
+        auto output = torch::zeros({num_targets, h.size(1)},torch::TensorOptions().dtype(source_features.dtype()).device(source_features.device()));
         output.scatter_add_(0,
             target_indices.view({-1, 1}).expand({-1, h.size(1)}),
             source_h
@@ -496,14 +518,14 @@ struct CriticNetworkTorchImpl : torch::nn::Module {
         // Constraint graph convolutions (aggregate messages FROM variables TO constraints)
         // edge_index_constr2var[0] = constr indices (sources), edge_index_constr2var[1] = var indices (targets)
         if (edge_index_constr2var.numel() > 0) {
-            auto constr_msg = graph_conv(var_h, edge_index_constr2var[0], edge_index_constr2var[1], nc, constr_gcn1);
+            auto constr_msg = graph_conv(var_h, edge_index_constr2var[1], edge_index_constr2var[0], nc, constr_gcn1);
             constr_h = constr_h + constr_msg;  // Residual connection
         }
         constr_h = torch::relu(constr_gcn2->forward(constr_h));
 
         // Global pooling: mean over all variables and constraints
         auto var_pooled = var_h.mean(0);  // (hidden_dim,)
-        auto constr_pooled = (nc > 0) ? constr_h.mean(0) : torch::zeros({hidden_dim}, var_h.dtype(), var_h.device());  // (hidden_dim,)
+        auto constr_pooled = (nc > 0) ? constr_h.mean(0) : torch::zeros({hidden_dim},torch::TensorOptions().dtype(var_h.dtype()).device(var_h.device()));
 
         // Phase encoding
         auto phase_idx = torch::tensor({phase}, torch::kLong);

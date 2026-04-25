@@ -73,9 +73,12 @@ This produces two executables:
 wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.2.0%2Bcpu.zip
 unzip libtorch-*.zip
 
+# sudo apt install gdb # For installing gdb debugger
+
 cd RL/
 rm -rf build && mkdir build && cd build
 cmake -DUSE_LIBTORCH=ON -DCMAKE_PREFIX_PATH=/home/ubuntu/libtorch ..
+# cmake -DUSE_LIBTORCH=ON -DCMAKE_PREFIX_PATH=/home/ubuntu/libtorch -DCMAKE_BUILD_TYPE=Debug ..
 make -j$(nproc)
 ```
 

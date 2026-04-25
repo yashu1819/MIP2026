@@ -420,6 +420,7 @@ TrainingForwardResult RLAgent::select_actions_training(
     const RLState& state, const BipartiteGraph& graph,
     const std::vector<int>& changeable_indices, int phase, std::mt19937& rng)
 {
+    (void)rng;
     TrainingForwardResult result;
     int nc = static_cast<int>(changeable_indices.size());
 
