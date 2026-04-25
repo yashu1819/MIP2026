@@ -101,6 +101,7 @@ EpisodeStats RLTrainer::training_episode(const MIPProblem& mip, std::mt19937& rn
 
         // Compute reward
         double reward = reward_computer.compute_reward(prev_state, state, obj_incumbent, phase);
+        reward /= std::sqrt((double)mip.num_cols); // Reward Normalization
         total_reward += reward;
 
         // Track reward stats
