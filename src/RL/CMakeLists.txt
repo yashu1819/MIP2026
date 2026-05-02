@@ -44,8 +44,7 @@ set(RL_SPH_HEADERS
 
 # MIP Definition library
 set(MIP_DEF_SOURCES
-    ../Definition/mip_problem.cpp
-    ../Utiils/mps_reader.cpp
+    ../mip_problem.cpp
 )
 
 # Build MIP definition as static library

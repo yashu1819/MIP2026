@@ -5,7 +5,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
-#include "../Definition/mip_problem.h"
+#include "../mip_problem.h"
 
 namespace rl_sph {
 

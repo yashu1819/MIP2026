@@ -220,9 +220,13 @@ RLAgent::RLAgent(const AgentConfig& config)
     , actor_torch_(VAR_FEATURE_DIM, CONST_FEATURE_DIM, config.hidden_dim, config.num_heads, config.num_layers)
     , critic_torch_(VAR_FEATURE_DIM, CONST_FEATURE_DIM, config.hidden_dim)
     , optimizer_(nullptr)
+    , device_(torch::cuda::is_available() ? torch::kCUDA : torch::kCPU)
 #endif
 {
 #ifdef USE_LIBTORCH
+    actor_torch_->to(device_);
+    critic_torch_->to(device_);
+
     // Collect all parameters from both actor and critic
     std::vector<torch::Tensor> all_params;
     for (auto& p : actor_torch_->parameters()) all_params.push_back(p);
@@ -305,7 +309,7 @@ torch::Tensor RLAgent::build_var_feature_tensor(const RLState& state, const Bipa
         std::cout << "Var features - min: " << min_val << ", max: " << max_val << std::endl;
     }
     
-    return tensor;
+    return tensor.to(device_);
 }
 
 // Build constraint feature tensor for GNN
@@ -331,7 +335,7 @@ torch::Tensor RLAgent::build_constr_feature_tensor(
             acc[j][k] = feats[k];
         }
     }
-    return tensor;
+    return tensor.to(device_);
 }
 
 // Build edge index tensor for graph message passing
@@ -345,7 +349,7 @@ torch::Tensor RLAgent::build_edge_index_tensor(const BipartiteGraph& graph) {
         acc[0][i] = graph.edges[i].first;   // var index
         acc[1][i] = graph.edges[i].second;  // constraint index
     }
-    return edge_index;
+    return edge_index.to(device_);
 }
 
 // Build edge weight tensor from constraint matrix coefficients
@@ -377,7 +381,7 @@ torch::Tensor RLAgent::build_edge_weight_tensor(
         }
         acc[i] = coef;
     }
-    return edge_weights;
+    return edge_weights.to(device_);
 }
 
 // Build changeable mask for actor forward pass
@@ -392,7 +396,7 @@ torch::Tensor RLAgent::build_changeable_mask(
             acc[idx] = true;
         }
     }
-    return mask;
+    return mask.to(device_);
 }
 #endif
 
@@ -423,7 +427,8 @@ std::vector<Action> RLAgent::select_actions(
     std::vector<Action> actions;
     actions.reserve(nc);
 
-    auto acc = logits_t.accessor<float, 2>();
+    auto logits_cpu = logits_t.cpu();
+    auto acc = logits_cpu.accessor<float, 2>();
     for (int i = 0; i < nc; ++i) {
         std::vector<float> lg = {acc[i][0], acc[i][1], acc[i][2]};
         auto probs = softmax(lg);
@@ -477,7 +482,7 @@ TrainingForwardResult RLAgent::select_actions_training(
 
     float eps = 0.3;  // start HIGH
     auto rand_mask = torch::rand({probs_t.size(0), 1}, probs_t.options());
-    auto random_actions = torch::randint(0, 3, {probs_t.size(0), 1}, torch::kLong);
+    auto random_actions = torch::randint(0, 3, {probs_t.size(0), 1}, torch::kLong).to(device_);
     auto sampled = torch::multinomial(probs_t, 1);
     // override some actions with random
     auto use_random = (rand_mask < eps);
@@ -486,8 +491,10 @@ TrainingForwardResult RLAgent::select_actions_training(
     auto log_probs = torch::log_softmax(logits_t, 1);
 
     result.log_prob_sum = 0.0f;
-    auto dist_acc = dist.accessor<long, 2>();
-    auto logits_acc = logits_t.accessor<float, 2>();
+    auto dist_cpu = dist.cpu();
+    auto logits_cpu = logits_t.cpu();
+    auto dist_acc = dist_cpu.accessor<long, 2>();
+    auto logits_acc = logits_cpu.accessor<float, 2>();
 
     result.actions.reserve(nc);
     result.logits.resize(nc, std::vector<float>(3));
@@ -500,7 +507,7 @@ TrainingForwardResult RLAgent::select_actions_training(
 
     // Critic forward pass (with gradients)
     float obj_norm = static_cast<float>(state.obj) / (std::abs(static_cast<float>(state.obj)) + 1e-6f);
-    auto obj_tensor = torch::tensor(obj_norm, torch::kFloat32);
+    auto obj_tensor = torch::tensor(obj_norm, torch::kFloat32).to(device_);
 
     // Build reverse edge index for critic
     auto edge_index_var2constr = build_edge_index_tensor(graph);  // [var; constr]
@@ -533,7 +540,7 @@ float RLAgent::estimate_value(const RLState& state, int phase) {
     auto constr_features = build_constr_feature_tensor(state, graph);
 
     float obj_norm = static_cast<float>(state.obj) / (std::abs(static_cast<float>(state.obj)) + 1e-6f);
-    auto obj_tensor = torch::tensor(obj_norm, torch::kFloat32);
+    auto obj_tensor = torch::tensor(obj_norm, torch::kFloat32).to(device_);
 
     // Build edge indices
     auto edge_index_var2constr = build_edge_index_tensor(graph);
@@ -593,7 +600,7 @@ void RLAgent::update(
     });
 
     // Accumulate loss over trajectory
-    torch::Tensor total_loss = torch::zeros({}, torch::kFloat32);
+    torch::Tensor total_loss = torch::zeros({}, torch::kFloat32).to(device_);
 
     for (size_t i = 0; i < T; ++i) {
         // Get dimensions from CURRENT state
@@ -610,9 +617,10 @@ void RLAgent::update(
 
         // Gather log probs for taken actions
         int nc = static_cast<int>(actions[i].size());
-        auto action_indices = torch::zeros({nc, 1}, torch::kLong);
+        auto action_indices_cpu = torch::zeros({nc, 1}, torch::kLong);
         for (int j = 0; j < nc; ++j)
-            action_indices[j][0] = static_cast<int>(actions[i][j]) + 1;
+            action_indices_cpu[j][0] = static_cast<int>(actions[i][j]) + 1;
+        auto action_indices = action_indices_cpu.to(device_);
 
         auto selected_log_probs = log_probs.gather(1, action_indices).squeeze(1);
         auto log_prob_sum = selected_log_probs.sum();
@@ -624,7 +632,7 @@ void RLAgent::update(
         // Critic forward pass
         float obj_norm = static_cast<float>(states[i].obj) /
                          (std::abs(static_cast<float>(states[i].obj)) + 1e-6f);
-        auto obj_t = torch::tensor(obj_norm, torch::kFloat32);
+        auto obj_t = torch::tensor(obj_norm, torch::kFloat32).to(device_);
 
         auto v = critic_torch_->forward(
             var_features,
@@ -635,7 +643,7 @@ void RLAgent::update(
             obj_t
         );
 
-        auto td_target = torch::tensor(static_cast<float>(rewards[i]) + gamma * values[i + 1]);
+        auto td_target = torch::tensor(static_cast<float>(rewards[i]) + gamma * values[i + 1]).to(device_);
         auto critic_loss = torch::pow(td_target - v, 2);
 
         total_loss = total_loss + actor_loss + critic_loss;

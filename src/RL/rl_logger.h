@@ -2,7 +2,7 @@
 #define RL_LOGGER_H
 
 #include "rl_state.h"
-#include "../Definition/mip_problem.h"
+#include "../mip_problem.h"
 #include <vector>
 #include <string>
 #include <chrono>

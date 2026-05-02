@@ -155,53 +155,29 @@ rl_sph_train/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rl_sph_train.dir/build.make CMakeFiles/rl_sph_train.dir/build
 .PHONY : rl_sph_train/fast
 
-home/ubuntu/MIP2026/src/Definition/mip_problem.o: home/ubuntu/MIP2026/src/Definition/mip_problem.cpp.o
-.PHONY : home/ubuntu/MIP2026/src/Definition/mip_problem.o
+home/ubuntu/MIP2026/src/mip_problem.o: home/ubuntu/MIP2026/src/mip_problem.cpp.o
+.PHONY : home/ubuntu/MIP2026/src/mip_problem.o
 
 # target to build an object file
-home/ubuntu/MIP2026/src/Definition/mip_problem.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mip_definition.dir/build.make CMakeFiles/mip_definition.dir/home/ubuntu/MIP2026/src/Definition/mip_problem.cpp.o
-.PHONY : home/ubuntu/MIP2026/src/Definition/mip_problem.cpp.o
+home/ubuntu/MIP2026/src/mip_problem.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mip_definition.dir/build.make CMakeFiles/mip_definition.dir/home/ubuntu/MIP2026/src/mip_problem.cpp.o
+.PHONY : home/ubuntu/MIP2026/src/mip_problem.cpp.o
 
-home/ubuntu/MIP2026/src/Definition/mip_problem.i: home/ubuntu/MIP2026/src/Definition/mip_problem.cpp.i
-.PHONY : home/ubuntu/MIP2026/src/Definition/mip_problem.i
-
-# target to preprocess a source file
-home/ubuntu/MIP2026/src/Definition/mip_problem.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mip_definition.dir/build.make CMakeFiles/mip_definition.dir/home/ubuntu/MIP2026/src/Definition/mip_problem.cpp.i
-.PHONY : home/ubuntu/MIP2026/src/Definition/mip_problem.cpp.i
-
-home/ubuntu/MIP2026/src/Definition/mip_problem.s: home/ubuntu/MIP2026/src/Definition/mip_problem.cpp.s
-.PHONY : home/ubuntu/MIP2026/src/Definition/mip_problem.s
-
-# target to generate assembly for a file
-home/ubuntu/MIP2026/src/Definition/mip_problem.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mip_definition.dir/build.make CMakeFiles/mip_definition.dir/home/ubuntu/MIP2026/src/Definition/mip_problem.cpp.s
-.PHONY : home/ubuntu/MIP2026/src/Definition/mip_problem.cpp.s
-
-home/ubuntu/MIP2026/src/Utiils/mps_reader.o: home/ubuntu/MIP2026/src/Utiils/mps_reader.cpp.o
-.PHONY : home/ubuntu/MIP2026/src/Utiils/mps_reader.o
-
-# target to build an object file
-home/ubuntu/MIP2026/src/Utiils/mps_reader.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mip_definition.dir/build.make CMakeFiles/mip_definition.dir/home/ubuntu/MIP2026/src/Utiils/mps_reader.cpp.o
-.PHONY : home/ubuntu/MIP2026/src/Utiils/mps_reader.cpp.o
-
-home/ubuntu/MIP2026/src/Utiils/mps_reader.i: home/ubuntu/MIP2026/src/Utiils/mps_reader.cpp.i
-.PHONY : home/ubuntu/MIP2026/src/Utiils/mps_reader.i
+home/ubuntu/MIP2026/src/mip_problem.i: home/ubuntu/MIP2026/src/mip_problem.cpp.i
+.PHONY : home/ubuntu/MIP2026/src/mip_problem.i
 
 # target to preprocess a source file
-home/ubuntu/MIP2026/src/Utiils/mps_reader.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mip_definition.dir/build.make CMakeFiles/mip_definition.dir/home/ubuntu/MIP2026/src/Utiils/mps_reader.cpp.i
-.PHONY : home/ubuntu/MIP2026/src/Utiils/mps_reader.cpp.i
+home/ubuntu/MIP2026/src/mip_problem.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mip_definition.dir/build.make CMakeFiles/mip_definition.dir/home/ubuntu/MIP2026/src/mip_problem.cpp.i
+.PHONY : home/ubuntu/MIP2026/src/mip_problem.cpp.i
 
-home/ubuntu/MIP2026/src/Utiils/mps_reader.s: home/ubuntu/MIP2026/src/Utiils/mps_reader.cpp.s
-.PHONY : home/ubuntu/MIP2026/src/Utiils/mps_reader.s
+home/ubuntu/MIP2026/src/mip_problem.s: home/ubuntu/MIP2026/src/mip_problem.cpp.s
+.PHONY : home/ubuntu/MIP2026/src/mip_problem.s
 
 # target to generate assembly for a file
-home/ubuntu/MIP2026/src/Utiils/mps_reader.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mip_definition.dir/build.make CMakeFiles/mip_definition.dir/home/ubuntu/MIP2026/src/Utiils/mps_reader.cpp.s
-.PHONY : home/ubuntu/MIP2026/src/Utiils/mps_reader.cpp.s
+home/ubuntu/MIP2026/src/mip_problem.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mip_definition.dir/build.make CMakeFiles/mip_definition.dir/home/ubuntu/MIP2026/src/mip_problem.cpp.s
+.PHONY : home/ubuntu/MIP2026/src/mip_problem.cpp.s
 
 main_rl.o: main_rl.cpp.o
 .PHONY : main_rl.o
@@ -370,12 +346,9 @@ help:
 	@echo "... mip_definition"
 	@echo "... rl_sph_test"
 	@echo "... rl_sph_train"
-	@echo "... home/ubuntu/MIP2026/src/Definition/mip_problem.o"
-	@echo "... home/ubuntu/MIP2026/src/Definition/mip_problem.i"
-	@echo "... home/ubuntu/MIP2026/src/Definition/mip_problem.s"
-	@echo "... home/ubuntu/MIP2026/src/Utiils/mps_reader.o"
-	@echo "... home/ubuntu/MIP2026/src/Utiils/mps_reader.i"
-	@echo "... home/ubuntu/MIP2026/src/Utiils/mps_reader.s"
+	@echo "... home/ubuntu/MIP2026/src/mip_problem.o"
+	@echo "... home/ubuntu/MIP2026/src/mip_problem.i"
+	@echo "... home/ubuntu/MIP2026/src/mip_problem.s"
 	@echo "... main_rl.o"
 	@echo "... main_rl.i"
 	@echo "... main_rl.s"

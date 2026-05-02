@@ -1,0 +1,134 @@
+RL-SPH Training
+===============
+Training files:  1
+  - ../../../test_set/instances/instance_01.mps.gz
+Updates:         1
+Steps/episode:   10
+Batch size:      8
+Learning rate:   0.0001
+Gamma:           0.99
+Save path:       test.pt
+
+Validating first instance...
+Coin0008I model_pre read with 0 errors
+  Variables:    5664 (binary=5664, integer=0, continuous=0)
+  Constraints:  6714
+
+Starting training...
+
+========================================================================
+  RL-SPH TRAINING — Detailed Diagnostics Enabled
+========================================================================
+  Training files registered: 1 (lazy-loading enabled)
+------------------------------------------------------------------------
+  Agent initialized 
+
+Update  AvgReward   BestObj   Feasible  Rollbacks P1Steps   P2Steps   Time(s)   
+------------------------------------------------------------------------
+Coin0008I model_pre read with 0 errors
+Var features - min: -1, max: 1
+min: 0.30395 max: 0.3744 sum: 24
+min: 0.29879 max: 0.391725 sum: 24
+min: 0.30818 max: 0.377624 sum: 24
+min: 0.307403 max: 0.373076 sum: 24
+min: 0.305609 max: 0.367404 sum: 24
+min: 0.303538 max: 0.369444 sum: 24
+min: 0.30417 max: 0.372307 sum: 24
+min: 0.300345 max: 0.370485 sum: 24
+min: 0.302756 max: 0.368011 sum: 24
+min: 0.292432 max: 0.373605 sum: 24
+min: 0.259483 max: 0.435369 sum: 24
+min: 0.266886 max: 0.431056 sum: 24
+min: 0.265273 max: 0.438066 sum: 24
+min: 0.271587 max: 0.433832 sum: 24
+min: 0.261077 max: 0.436817 sum: 24
+min: 0.271889 max: 0.432057 sum: 24
+min: 0.262314 max: 0.435978 sum: 24
+min: 0.266499 max: 0.432502 sum: 24
+min: 0.258899 max: 0.437624 sum: 24
+min: 0.259172 max: 0.433985 sum: 24
+min: 0.231635 max: 0.409705 sum: 24
+min: 0.231162 max: 0.40914 sum: 24
+min: 0.223876 max: 0.418613 sum: 24
+min: 0.233798 max: 0.415944 sum: 24
+min: 0.229369 max: 0.409618 sum: 24
+min: 0.227456 max: 0.423999 sum: 24
+min: 0.234812 max: 0.414083 sum: 24
+min: 0.229588 max: 0.416014 sum: 24
+min: 0.221933 max: 0.41603 sum: 24
+min: 0.232201 max: 0.421571 sum: 24
+min: 0.188793 max: 0.479397 sum: 24
+min: 0.198435 max: 0.487282 sum: 24
+min: 0.19521 max: 0.483194 sum: 24
+min: 0.188271 max: 0.486534 sum: 24
+min: 0.184579 max: 0.4911 sum: 24
+min: 0.186797 max: 0.49006 sum: 24
+min: 0.192306 max: 0.482621 sum: 24
+Var features - min: -1, max: 1
+min: 0.189874 max: 0.485179 sum: 24
+min: 0.189248 max: 0.478764 sum: 24
+min: 0.191097 max: 0.488394 sum: 24
+min: 0.23406 max: 0.44272 sum: 24
+min: 0.232852 max: 0.438898 sum: 24
+min: 0.232661 max: 0.437671 sum: 24
+min: 0.239148 max: 0.436957 sum: 24
+min: 0.234397 max: 0.438131 sum: 24
+min: 0.233925 max: 0.436133 sum: 24
+min: 0.233199 max: 0.437323 sum: 24
+min: 0.234219 max: 0.437645 sum: 24
+min: 0.228375 max: 0.444396 sum: 24
+min: 0.22847 max: 0.438924 sum: 24
+min: 0.249271 max: 0.446505 sum: 24
+min: 0.246143 max: 0.448628 sum: 24
+min: 0.242385 max: 0.447681 sum: 24
+min: 0.249424 max: 0.448937 sum: 24
+min: 0.248095 max: 0.447903 sum: 24
+min: 0.250913 max: 0.453627 sum: 24
+min: 0.251728 max: 0.44837 sum: 24
+min: 0.247951 max: 0.452687 sum: 24
+min: 0.246175 max: 0.453974 sum: 24
+min: 0.249638 max: 0.444685 sum: 24
+min: 0.272383 max: 0.418515 sum: 24
+min: 0.274051 max: 0.425913 sum: 24
+min: 0.272246 max: 0.42063 sum: 24
+min: 0.268436 max: 0.412504 sum: 24
+min: 0.269756 max: 0.415116 sum: 24
+min: 0.269167 max: 0.419541 sum: 24
+min: 0.272108 max: 0.416844 sum: 24
+min: 0.271039 max: 0.419305 sum: 24
+min: 0.270532 max: 0.41472 sum: 24
+min: 0.272099 max: 0.422142 sum: 24
+Var features - min: -1, max: 1
+min: 0.270663 max: 0.434869 sum: 24
+min: 0.262494 max: 0.437273 sum: 24
+min: 0.273749 max: 0.428205 sum: 24
+min: 0.268889 max: 0.436021 sum: 24
+min: 0.267506 max: 0.432265 sum: 24
+min: 0.271941 max: 0.44224 sum: 24
+min: 0.272892 max: 0.436303 sum: 24
+min: 0.272475 max: 0.436949 sum: 24
+min: 0.269298 max: 0.433892 sum: 24
+min: 0.273444 max: 0.432171 sum: 24
+0       -0.1391     inf       0         0         80        0         12.68     
+========================================================================
+  TRAINING COMPLETE
+========================================================================
+  Total updates:         1
+  Total time:            12.68s
+  Avg time/update:       12.6767s
+  Final avg reward:      -1.1127
+  Reward (first 1):     -0.1391
+  Reward (last  1):     -0.1391
+  Reward trend:          STABLE →
+  Feasible solutions:    0
+========================================================================
+  Model saved to: test.pt
+
+Training Complete
+=================
+Total updates:   1
+Avg reward:      -1.1127
+Model saved to:  test.pt
+
+To use trained model for inference:
+  ./rl_sph_test <problem.mps> 60 2000 test.pt

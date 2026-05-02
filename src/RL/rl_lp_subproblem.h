@@ -1,7 +1,7 @@
 #ifndef RL_LP_SUBPROBLEM_H
 #define RL_LP_SUBPROBLEM_H
 
-#include "../Definition/mip_problem.h"
+#include "../mip_problem.h"
 #include <vector>
 #include <cmath>
 #include <iostream>

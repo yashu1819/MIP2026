@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <cmath>
-#include "../Definition/mip_problem.h"
+#include "../mip_problem.h"
 
 namespace rl_sph {
 

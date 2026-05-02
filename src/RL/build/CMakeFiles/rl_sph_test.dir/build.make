@@ -73,71 +73,71 @@ CMakeFiles/rl_sph_test.dir/main_rl.cpp.o: CMakeFiles/rl_sph_test.dir/flags.make
 CMakeFiles/rl_sph_test.dir/main_rl.cpp.o: ../main_rl.cpp
 CMakeFiles/rl_sph_test.dir/main_rl.cpp.o: CMakeFiles/rl_sph_test.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ubuntu/MIP2026/src/RL/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/rl_sph_test.dir/main_rl.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rl_sph_test.dir/main_rl.cpp.o -MF CMakeFiles/rl_sph_test.dir/main_rl.cpp.o.d -o CMakeFiles/rl_sph_test.dir/main_rl.cpp.o -c /home/ubuntu/MIP2026/src/RL/main_rl.cpp
+	/usr/bin/g++-12 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rl_sph_test.dir/main_rl.cpp.o -MF CMakeFiles/rl_sph_test.dir/main_rl.cpp.o.d -o CMakeFiles/rl_sph_test.dir/main_rl.cpp.o -c /home/ubuntu/MIP2026/src/RL/main_rl.cpp
 
 CMakeFiles/rl_sph_test.dir/main_rl.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rl_sph_test.dir/main_rl.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ubuntu/MIP2026/src/RL/main_rl.cpp > CMakeFiles/rl_sph_test.dir/main_rl.cpp.i
+	/usr/bin/g++-12 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ubuntu/MIP2026/src/RL/main_rl.cpp > CMakeFiles/rl_sph_test.dir/main_rl.cpp.i
 
 CMakeFiles/rl_sph_test.dir/main_rl.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rl_sph_test.dir/main_rl.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ubuntu/MIP2026/src/RL/main_rl.cpp -o CMakeFiles/rl_sph_test.dir/main_rl.cpp.s
+	/usr/bin/g++-12 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ubuntu/MIP2026/src/RL/main_rl.cpp -o CMakeFiles/rl_sph_test.dir/main_rl.cpp.s
 
 CMakeFiles/rl_sph_test.dir/rl_graph.cpp.o: CMakeFiles/rl_sph_test.dir/flags.make
 CMakeFiles/rl_sph_test.dir/rl_graph.cpp.o: ../rl_graph.cpp
 CMakeFiles/rl_sph_test.dir/rl_graph.cpp.o: CMakeFiles/rl_sph_test.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ubuntu/MIP2026/src/RL/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/rl_sph_test.dir/rl_graph.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rl_sph_test.dir/rl_graph.cpp.o -MF CMakeFiles/rl_sph_test.dir/rl_graph.cpp.o.d -o CMakeFiles/rl_sph_test.dir/rl_graph.cpp.o -c /home/ubuntu/MIP2026/src/RL/rl_graph.cpp
+	/usr/bin/g++-12 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rl_sph_test.dir/rl_graph.cpp.o -MF CMakeFiles/rl_sph_test.dir/rl_graph.cpp.o.d -o CMakeFiles/rl_sph_test.dir/rl_graph.cpp.o -c /home/ubuntu/MIP2026/src/RL/rl_graph.cpp
 
 CMakeFiles/rl_sph_test.dir/rl_graph.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rl_sph_test.dir/rl_graph.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ubuntu/MIP2026/src/RL/rl_graph.cpp > CMakeFiles/rl_sph_test.dir/rl_graph.cpp.i
+	/usr/bin/g++-12 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ubuntu/MIP2026/src/RL/rl_graph.cpp > CMakeFiles/rl_sph_test.dir/rl_graph.cpp.i
 
 CMakeFiles/rl_sph_test.dir/rl_graph.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rl_sph_test.dir/rl_graph.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ubuntu/MIP2026/src/RL/rl_graph.cpp -o CMakeFiles/rl_sph_test.dir/rl_graph.cpp.s
+	/usr/bin/g++-12 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ubuntu/MIP2026/src/RL/rl_graph.cpp -o CMakeFiles/rl_sph_test.dir/rl_graph.cpp.s
 
 CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.o: CMakeFiles/rl_sph_test.dir/flags.make
 CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.o: ../rl_heuristic.cpp
 CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.o: CMakeFiles/rl_sph_test.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ubuntu/MIP2026/src/RL/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.o -MF CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.o.d -o CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.o -c /home/ubuntu/MIP2026/src/RL/rl_heuristic.cpp
+	/usr/bin/g++-12 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.o -MF CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.o.d -o CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.o -c /home/ubuntu/MIP2026/src/RL/rl_heuristic.cpp
 
 CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ubuntu/MIP2026/src/RL/rl_heuristic.cpp > CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.i
+	/usr/bin/g++-12 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ubuntu/MIP2026/src/RL/rl_heuristic.cpp > CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.i
 
 CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ubuntu/MIP2026/src/RL/rl_heuristic.cpp -o CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.s
+	/usr/bin/g++-12 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ubuntu/MIP2026/src/RL/rl_heuristic.cpp -o CMakeFiles/rl_sph_test.dir/rl_heuristic.cpp.s
 
 CMakeFiles/rl_sph_test.dir/rl_agent.cpp.o: CMakeFiles/rl_sph_test.dir/flags.make
 CMakeFiles/rl_sph_test.dir/rl_agent.cpp.o: ../rl_agent.cpp
 CMakeFiles/rl_sph_test.dir/rl_agent.cpp.o: CMakeFiles/rl_sph_test.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ubuntu/MIP2026/src/RL/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/rl_sph_test.dir/rl_agent.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rl_sph_test.dir/rl_agent.cpp.o -MF CMakeFiles/rl_sph_test.dir/rl_agent.cpp.o.d -o CMakeFiles/rl_sph_test.dir/rl_agent.cpp.o -c /home/ubuntu/MIP2026/src/RL/rl_agent.cpp
+	/usr/bin/g++-12 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rl_sph_test.dir/rl_agent.cpp.o -MF CMakeFiles/rl_sph_test.dir/rl_agent.cpp.o.d -o CMakeFiles/rl_sph_test.dir/rl_agent.cpp.o -c /home/ubuntu/MIP2026/src/RL/rl_agent.cpp
 
 CMakeFiles/rl_sph_test.dir/rl_agent.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rl_sph_test.dir/rl_agent.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ubuntu/MIP2026/src/RL/rl_agent.cpp > CMakeFiles/rl_sph_test.dir/rl_agent.cpp.i
+	/usr/bin/g++-12 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ubuntu/MIP2026/src/RL/rl_agent.cpp > CMakeFiles/rl_sph_test.dir/rl_agent.cpp.i
 
 CMakeFiles/rl_sph_test.dir/rl_agent.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rl_sph_test.dir/rl_agent.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ubuntu/MIP2026/src/RL/rl_agent.cpp -o CMakeFiles/rl_sph_test.dir/rl_agent.cpp.s
+	/usr/bin/g++-12 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ubuntu/MIP2026/src/RL/rl_agent.cpp -o CMakeFiles/rl_sph_test.dir/rl_agent.cpp.s
 
 CMakeFiles/rl_sph_test.dir/rl_training.cpp.o: CMakeFiles/rl_sph_test.dir/flags.make
 CMakeFiles/rl_sph_test.dir/rl_training.cpp.o: ../rl_training.cpp
 CMakeFiles/rl_sph_test.dir/rl_training.cpp.o: CMakeFiles/rl_sph_test.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ubuntu/MIP2026/src/RL/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/rl_sph_test.dir/rl_training.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rl_sph_test.dir/rl_training.cpp.o -MF CMakeFiles/rl_sph_test.dir/rl_training.cpp.o.d -o CMakeFiles/rl_sph_test.dir/rl_training.cpp.o -c /home/ubuntu/MIP2026/src/RL/rl_training.cpp
+	/usr/bin/g++-12 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rl_sph_test.dir/rl_training.cpp.o -MF CMakeFiles/rl_sph_test.dir/rl_training.cpp.o.d -o CMakeFiles/rl_sph_test.dir/rl_training.cpp.o -c /home/ubuntu/MIP2026/src/RL/rl_training.cpp
 
 CMakeFiles/rl_sph_test.dir/rl_training.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rl_sph_test.dir/rl_training.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ubuntu/MIP2026/src/RL/rl_training.cpp > CMakeFiles/rl_sph_test.dir/rl_training.cpp.i
+	/usr/bin/g++-12 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/ubuntu/MIP2026/src/RL/rl_training.cpp > CMakeFiles/rl_sph_test.dir/rl_training.cpp.i
 
 CMakeFiles/rl_sph_test.dir/rl_training.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rl_sph_test.dir/rl_training.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ubuntu/MIP2026/src/RL/rl_training.cpp -o CMakeFiles/rl_sph_test.dir/rl_training.cpp.s
+	/usr/bin/g++-12 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/ubuntu/MIP2026/src/RL/rl_training.cpp -o CMakeFiles/rl_sph_test.dir/rl_training.cpp.s
 
 # Object files for target rl_sph_test
 rl_sph_test_OBJECTS = \
@@ -161,9 +161,17 @@ rl_sph_test: /usr/lib/x86_64-linux-gnu/libOsiClp.so
 rl_sph_test: /usr/lib/x86_64-linux-gnu/libOsi.so
 rl_sph_test: /usr/lib/x86_64-linux-gnu/libClp.so
 rl_sph_test: /usr/lib/x86_64-linux-gnu/libCoinUtils.so
-rl_sph_test: /home/ubuntu/libtorch/lib/libtorch.so
 rl_sph_test: /home/ubuntu/libtorch/lib/libc10.so
 rl_sph_test: /home/ubuntu/libtorch/lib/libkineto.a
+rl_sph_test: /usr/lib/x86_64-linux-gnu/libcuda.so
+rl_sph_test: /usr/local/cuda/lib64/libnvrtc.so
+rl_sph_test: /usr/local/cuda-11.8/targets/x86_64-linux/lib/libnvToolsExt.so
+rl_sph_test: /usr/local/cuda/lib64/libcudart.so
+rl_sph_test: /home/ubuntu/libtorch/lib/libc10_cuda.so
+rl_sph_test: /home/ubuntu/libtorch/lib/libtorch.so
+rl_sph_test: /home/ubuntu/libtorch/lib/libtorch_cpu.so
+rl_sph_test: /home/ubuntu/libtorch/lib/libc10_cuda.so
+rl_sph_test: /usr/local/cuda/lib64/libcudart.so
 rl_sph_test: /home/ubuntu/libtorch/lib/libc10.so
 rl_sph_test: CMakeFiles/rl_sph_test.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/ubuntu/MIP2026/src/RL/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX executable rl_sph_test"

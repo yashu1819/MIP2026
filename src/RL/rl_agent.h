@@ -522,7 +522,8 @@ struct CriticNetworkTorchImpl : torch::nn::Module {
         auto constr_pooled = (nc > 0) ? constr_h.mean(0) : torch::zeros({hidden_dim},torch::TensorOptions().dtype(var_h.dtype()).device(var_h.device()));
 
         // Phase encoding
-        auto phase_idx = torch::tensor({phase}, torch::kLong);
+        auto phase_idx = torch::tensor({phase}, torch::TensorOptions().dtype(torch::kLong).device(var_features.device()));
+        std::cout << "phase_idx device: " << phase_idx.device() << " emb device: " << phase_embedding->weight.device() << std::endl;
         auto phase_emb = phase_embedding->forward(phase_idx).squeeze(0);  // (hidden_dim,)
 
         // Objective encoding
@@ -677,6 +678,7 @@ private:
     ActorNetworkTorch actor_torch_;
     CriticNetworkTorch critic_torch_;
     std::shared_ptr<torch::optim::RMSprop> optimizer_;
+    torch::Device device_;
 
     // Build feature tensors for GNN
     torch::Tensor build_var_feature_tensor(

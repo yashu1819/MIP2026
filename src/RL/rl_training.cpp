@@ -238,37 +238,16 @@ TrainingStats RLTrainer::train() {
     double total_start = get_time_seconds();
 
     // Load training instances
-    std::vector<MIPProblem> instances;
+    std::vector<std::string> instances = config_.training_files;
     if (config_.verbose) {
         print_training_banner();
-        std::cout << "  Loading training instances..." << std::endl;
-    }
-
-    for (const auto& file : config_.training_files) {
-        try {
-            MIPProblem mip;
-            mip.load_from_mps(file);
-            mip.finalize();
-            instances.push_back(mip);
-            if (config_.verbose) {
-                std::cout << "    ✓ Loaded: " << file
-                          << " (" << mip.num_cols << " vars, "
-                          << mip.num_rows << " constrs)" << std::endl;
-            }
-        } catch (const std::exception& e) {
-            if (config_.verbose)
-                std::cerr << "    ✗ Failed: " << file << ": " << e.what() << std::endl;
-        }
+        std::cout << "  Training files registered: " << instances.size() << " (lazy-loading enabled)" << std::endl;
+        print_thin_separator();
     }
 
     if (instances.empty()) {
-        if (config_.verbose) std::cerr << "No training instances loaded." << std::endl;
+        if (config_.verbose) std::cerr << "No training instances found." << std::endl;
         return overall_stats;
-    }
-
-    if (config_.verbose) {
-        std::cout << "  Instances loaded: " << instances.size() << std::endl;
-        print_thin_separator();
     }
 
     // ========== FIXED: Create agent WITHOUT dimensions ==========
@@ -313,13 +292,23 @@ TrainingStats RLTrainer::train() {
         int batch_p1 = 0, batch_p2 = 0;
         double batch_best_obj = std::numeric_limits<double>::infinity();
 
-        for (int b = 0; b < config_.batch_size; ++b) {
-            size_t idx = dist(rng_);
+        // Randomly select one instance for this entire batch to minimize file I/O
+        size_t idx = dist(rng_);
+        
+        MIPProblem mip;
+        try {
+            mip.load_from_mps(instances[idx]);
+            mip.finalize();
+        } catch (const std::exception& e) {
+            std::cerr << "Failed to load " << instances[idx] << ": " << e.what() << std::endl;
+            continue;
+        }
 
-            // Set MIP reference for the current instance
-            agent_ptr_->set_mip_problem(instances[idx]);
-            
-            TrainingStats ist = train_on_instance(instances[idx], static_cast<int>(idx));
+        // Set MIP reference for the current instance
+        agent_ptr_->set_mip_problem(mip);
+
+        for (int b = 0; b < config_.batch_size; ++b) {
+            TrainingStats ist = train_on_instance(mip, static_cast<int>(idx));
             batch_reward += ist.avg_reward;
 
             // Aggregate episode-level stats

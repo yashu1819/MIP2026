@@ -1,7 +1,7 @@
 #ifndef RL_GRAPH_H
 #define RL_GRAPH_H
 
-#include "../Definition/mip_problem.h"
+#include "../mip_problem.h"
 #include <vector>
 #include <unordered_map>
 

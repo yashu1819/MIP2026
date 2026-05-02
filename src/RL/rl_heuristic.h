@@ -1,8 +1,8 @@
 #ifndef RL_HEURISTIC_H
 #define RL_HEURISTIC_H
 
-#include "../Definition/mip_problem.h"
-#include "../Definition/solution.h"
+#include "../mip_problem.h"
+#include "../solution.h"
 #include "rl_graph.h"
 #include "rl_state.h"
 #include "rl_reward.h"

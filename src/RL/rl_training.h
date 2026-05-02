@@ -4,7 +4,7 @@
 #include "rl_agent.h"
 #include "rl_heuristic.h"
 #include "rl_logger.h" 
-#include "../Definition/mip_problem.h"
+#include "../mip_problem.h"
 #include <vector>
 #include <string>
 #include <random>

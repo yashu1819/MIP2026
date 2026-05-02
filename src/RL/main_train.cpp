@@ -1,5 +1,5 @@
 #include "rl_training.h"
-#include "../Definition/mip_problem.h"
+#include "../mip_problem.h"
 #include <iostream>
 #include <string>
 #include <vector>
